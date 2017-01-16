@@ -37,9 +37,10 @@ Index.prototype = {
 		this.createLight();
 		this.createGround(10000,10000);
 
-		//帧率显示
-		this.stats = new Stats();
-		document.body.appendChild( this.stats.dom );
+		// //帧率显示
+		// this.stats = new Stats();
+		// document.body.appendChild( this.stats.dom );
+		
 		this.initGaze();
 
 		//创建立方体
@@ -77,7 +78,6 @@ Index.prototype = {
 		window.addEventListener( 'resize', function() {
 			self.onWindowResize();
 		}, false );
-		// this.domEvents   = new THREEx.DomEvents(self.camera, self.renderer.domElement);
 	},
 	initGaze: function() {
 
@@ -168,15 +168,10 @@ Index.prototype = {
 
 	createGround: function(width,height) {
 		//  GROUND
-		// var gt = new THREE.TextureLoader().load( "./textures/road.jpg" );
 		this.gg = new THREE.PlaneBufferGeometry( width, height );
 		var gm = new THREE.MeshPhongMaterial( { color: 0x999999 } );
 		this.ground = new THREE.Mesh( this.gg, gm );
 		this.ground.rotation.x = - Math.PI / 2;
-		// this.ground.material.map.repeat.set( 100, 100 );
-		// this.ground.material.map.wrapS = THREE.RepeatWrapping;
-		// this.ground.material.map.wrapT = THREE.RepeatWrapping;
-		// note that because the ground does not cast a shadow, .castShadow is left false
 		this.ground.receiveShadow = true;
 		this.scene.add( this.ground );
 	},
@@ -205,7 +200,7 @@ Index.prototype = {
 			self.gaze();
 			self.vrControls.update();
 			requestAnimationFrame(render);
-			self.stats.update();
+			// self.stats.update();
 		}
 		render();
 	}
