@@ -25,8 +25,8 @@ Index.prototype = {
 		//初始化相机
 		this.camera = new THREE.PerspectiveCamera(70,window.innerWidth/window.innerHeight,0.1,4000);
 		this.camera.position.set( 0, 100, 0 );
-		this.createCrosshair(0.005);
 		this.scene.add(this.camera);
+		this.createCrosshair();
 		//初始化渲染器
 		this.renderer = new THREE.WebGLRenderer({ antialias: true } );
 		this.renderer.setSize(window.innerWidth,window.innerHeight);
@@ -118,19 +118,14 @@ Index.prototype = {
     	window.screen.orientation.lock('landscape');
   		}
 	},
-	createCrosshair: function (size) {
-		var material = new THREE.LineBasicMaterial({color:0xffffff});
-		var geometry = new THREE.Geometry();
-		// crosshair
-		geometry.vertices.push(new THREE.Vector3(0, size, 0));
-		geometry.vertices.push(new THREE.Vector3(0, -size, 0));
-		geometry.vertices.push(new THREE.Vector3(0, 0, 0));
-		geometry.vertices.push(new THREE.Vector3(size, 0, 0));    
-		geometry.vertices.push(new THREE.Vector3(-size, 0, 0));
-
-		var crosshair = new THREE.Line( geometry, material );
-		crosshair.position.set(0,0,-0.3);
-		this.camera.add(crosshair);
+	createCrosshair: function () {
+		var crosshair = new THREE.Mesh(new THREE.RingGeometry( 0.02, 0.04, 32 ),new THREE.MeshBasicMaterial( {
+			color: 0xffffff,
+			opacity: 0.5,
+			transparent: true
+		}));
+		crosshair.position.z = -2;
+		this.camera.add( crosshair );
 	},
 	createCube: function () {
 		//创建立方体
