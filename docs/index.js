@@ -32,7 +32,7 @@ Index.prototype = {
 		this.renderer.setSize(window.innerWidth,window.innerHeight);
 		this.renderer.setClearColor(0x519EcB);
 		this.renderer.shadowMapEnabled = true;
-		document.body.appendChild(this.renderer.domElement);
+		document.querySelector('.main-page').appendChild(this.renderer.domElement);
 		this.scene.fog	= new THREE.FogExp2( 0xd0e0f0, 0.0025 );
 		this.createLight();
 		this.createGround(10000,10000);
@@ -40,7 +40,7 @@ Index.prototype = {
 		// //帧率显示
 		// this.stats = new Stats();
 		// document.body.appendChild( this.stats.dom );
-		
+
 		this.initGaze();
 
 		//创建立方体

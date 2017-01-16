@@ -3,10 +3,17 @@
 	margin: 0;
 	padding: 0;
 }
+html,body {
+	height: 100%;
+}
 body {
 	font-size: 14px;
 	font-family: "Arial","Microsoft YaHei","黑体",sans-serif;
 	overflow: hidden;
+}
+.main-page {
+	position: relative;
+	height: 100%;
 }
 .btn-vr {
 	color: #eee;
@@ -15,7 +22,7 @@ body {
 	background-image: url('./textures/vr-off.png');
 	background-repeat: no-repeat;
 	background-size: 100%;
-	position: fixed;
+	position: absolute;
 	right: 12px;
 	bottom: 12px;
 	cursor: pointer;
