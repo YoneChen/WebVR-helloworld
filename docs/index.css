@@ -98,23 +98,20 @@ body {
 	color: #eee;
 }
 .btn-vr {
-	border:solid 2px #eee;
 	color: #eee;
-	text-align: center;
-	line-height: 36px;
 	width: 36px;
 	height: 36px;
-	border-radius: 50%;
+	background-image: url('./textures/vr-off.png');
+	background-repeat: no-repeat;
+	background-size: 100%;
 	position: fixed;
 	right: 12px;
-	opacity: 0.5;
-	transition:all 0.5s;
 	bottom: 12px;
 	cursor: pointer;
 	display: none;
 }
-.btn-vr:hover {
-	opacity: 1;
+.on {
+	background-image: url('./textures/vr-on.png');
 }
 @keyframes ro {
 	from {

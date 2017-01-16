@@ -55,9 +55,15 @@ Index.prototype = {
 	},
 	bindEvent: function() {
 		var self = this;
-		document.getElementById('vr').addEventListener('click',function () {
+		document.getElementById('vr').addEventListener('click',function (e) {
 		  	(!vrMode) ? vrMode = true : vrMode = false;
-		  	self.requestFullscreen();
+		  	if(vrMode) {
+		  		e.target.className += ' on';
+		  		self.requestFullscreen();
+		  	} else {
+		  		var cln = e.target.className;
+		  		e.target.className = cln.replace(' on','');
+		  	}
 		  	self.onWindowResize();
 		});
 
