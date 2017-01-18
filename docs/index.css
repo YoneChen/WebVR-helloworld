@@ -15,19 +15,3 @@ body {
 	position: relative;
 	height: 100%;
 }
-.btn-vr {
-	color: #eee;
-	width: 36px;
-	height: 36px;
-	background-image: url('./textures/vr-off.png');
-	background-repeat: no-repeat;
-	background-size: 100%;
-	position: absolute;
-	right: 12px;
-	bottom: 12px;
-	cursor: pointer;
-	display: none;
-}
-.on {
-	background-image: url('./textures/vr-on.png');
-}
