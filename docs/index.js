@@ -20,13 +20,15 @@ Index.prototype = {
 		// 初始化渲染器
 		this.renderer = new THREE.WebGLRenderer({ antialias: true } );
 		this.renderer.setSize(window.innerWidth,window.innerHeight);
-		this.renderer.setClearColor(0xeeeeee);
+		this.renderer.setClearColor(0x519EcB);
 		this.renderer.shadowMapEnabled = true;
 		this.renderer.setPixelRatio(window.devicePixelRatio);
 		document.querySelector('.main-page').appendChild(this.renderer.domElement);
 
 		// 创建光线
 		this.createLight();
+		// 创建地面
+		this.createGround(1000,1000);
 
 		this.initGaze();
 		// 初始化VR视觉控件
@@ -58,11 +60,11 @@ Index.prototype = {
 	createCube: function () {
 		// 创建立方体
 		var self = this;
-		var geometry = new THREE.CubeGeometry( 10,10,10);
+		var geometry = new THREE.CubeGeometry( 20,20,20);
 		var Cubematerial = new THREE.MeshLambertMaterial( { color: 0xef6500,needsUpdate: true,opacity:1,transparent:true} );
 		this.Cube = new THREE.Mesh( geometry, Cubematerial );
-		this.Cube.position.set(0,0,-50);
-		this.Cube.rotation.set(Math.PI/6,Math.PI/4,0);
+		this.Cube.position.set(20,0,-50);
+		this.Cube.castShadow = true;
 		this.scene.add(this.Cube);
 		this.MESHLIST.push(this.Cube);
 		this.Cube.gazeEvent = function() {
@@ -76,7 +78,7 @@ Index.prototype = {
 		// 创建光线
         this.scene.add(new THREE.AmbientLight(0xFFFFFF));
         var light = new THREE.DirectionalLight( 0xffffff, 0.3 );
-		light.position.set( 200, 450, 500 );
+		light.position.set( 50, 50, 50 );
 		light.castShadow = true;
 		light.shadow.mapSize.width = 2048;
 		light.shadow.mapSize.height = 512;
@@ -87,6 +89,16 @@ Index.prototype = {
 		light.shadow.camera.top = 350;
 		light.shadow.camera.bottom = -350;
 		this.scene.add( light );
+	},
+	createGround: function(width,height) {
+		// 创建地平面
+		this.gg = new THREE.PlaneBufferGeometry( width, height );
+		var gm = new THREE.MeshPhongMaterial( { color: 0xaaaaaa } );
+		this.ground = new THREE.Mesh( this.gg, gm );
+		this.ground.rotation.x = - Math.PI / 2;
+		this.ground.position.y = -10;
+		this.ground.receiveShadow = true;
+		this.scene.add( this.ground );
 	},
 	initGaze: function() {
 		// 初始化射线发射源
