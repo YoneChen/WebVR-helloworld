@@ -28,13 +28,14 @@ Index.prototype = {
 		// 创建光线
 		this.createLight();
 		// 创建背景
-		this.createPanorama(500);
+		var bgTexture = new THREE.TextureLoader().load( './textures/2294472375_24a3b8ef46_o.jpg' );
+		bgTexture.mapping = THREE.SphericalReflectionMapping;
+		this.createPanorama(1000,bgTexture);
+		this.createBalls(20,bgTexture,200);
 
 		this.initGaze();
 		// 初始化VR视觉控件
 		this.initVR();
-		// 创建立方体
-		this.createCube();
 		// 事件绑定
 		this.bindEvent();
 		this.render();
@@ -57,23 +58,6 @@ Index.prototype = {
 			self.effect.setSize(window.innerWidth, window.innerHeight);
 		}, false );
 	},
-	createCube: function () {
-		// 创建立方体
-		var self = this;
-		var geometry = new THREE.CubeGeometry( 20,20,20);
-		var Cubematerial = new THREE.MeshLambertMaterial( { color: 0xef6500,needsUpdate: true,opacity:1,transparent:true} );
-		this.Cube = new THREE.Mesh( geometry, Cubematerial );
-		this.Cube.position.set(20,0,-50);
-		this.Cube.castShadow = true;
-		this.scene.add(this.Cube);
-		this.MESHLIST.push(this.Cube);
-		this.Cube.gazeEvent = function() {
-			self.Cube.material.opacity = 0.5;
-		}
-		this.Cube.blurEvent = function() {
-			self.Cube.material.opacity = 1;
-		}
-	},
 	createLight: function() {
 		// 创建光线
         this.scene.add(new THREE.AmbientLight(0xFFFFFF));
@@ -90,14 +74,35 @@ Index.prototype = {
 		light.shadow.camera.bottom = -350;
 		this.scene.add( light );
 	},
-	createPanorama: function(radius) {
+	createPanorama: function(radius,bgTexture) {
 		// 创建全景
 		this.pg = new THREE.SphereGeometry(radius,60,40);
 		this.pg.scale( - 1, 1, 1 );
-		var pm = new THREE.MeshBasicMaterial( { map: new THREE.TextureLoader().load( './textures/2294472375_24a3b8ef46_o.jpg' ) } );
+		var pm = new THREE.MeshBasicMaterial( { map: bgTexture } );
 		this.panorama = new THREE.Mesh( this.pg, pm );
 		// this.ground.position.y = -10;
 		this.scene.add( this.panorama );
+	},
+	createBalls: function (radius,bgTexture,num) {
+		// 创建全景
+		this.pg = new THREE.SphereGeometry(radius,60,40);
+		var pm = new THREE.MeshBasicMaterial( {color: 0xffffff, envMap: bgTexture } );
+		for(var i = 0;i<num;i++){
+			var ball = new THREE.Mesh( this.pg, pm );
+			ball.position.set(Math.random()*1000 - 500,Math.random()*1000 - 500,Math.random()*1000 - 500);
+			this.scene.add( ball );
+			var d = 1;
+			if(ball.position.y>0) d = -1;
+			var tween = new TWEEN.Tween(ball.position)
+			.to({y:ball.position.y+d*200*Math.random() -200},5000)
+			.easing(TWEEN.Easing.Sinusoidal.InOut);
+			var tweenback = new TWEEN.Tween(ball.position)
+			.to({y:ball.position.y-d*200*Math.random() - 200},5000)
+			.easing(TWEEN.Easing.Sinusoidal.InOut)
+			tween.chain(tweenback);
+			tweenback.chain(tween);
+			tween.start();
+		}
 	},
 	initGaze: function() {
 		// 初始化射线发射源
@@ -134,9 +139,9 @@ Index.prototype = {
 		// 启动渲染
 		var self = this;
 		var render = function() {
-			self.Cube.rotation.y += 0.01;
 			self.gaze();
 			self.controls.update();
+			TWEEN.update();
 			self.manager.render(self.scene, self.camera);
 			requestAnimationFrame(render);
 		}
