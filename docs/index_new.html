@@ -99,7 +99,7 @@ class Index {
 			renderer.vr.setDevice(display[0]);
 			const button = document.querySelector('.vr-btn');
 			VRButton.init(display[0],button,() => button.textContent = '退出VR',() => button.textContent = '进入VR');
-		}).catch(err => console.warn(err););
+		}).catch(err => console.warn(err));
 	}
 	resize() {
 		const {camera,renderer} = this;
