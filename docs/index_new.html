@@ -80,17 +80,25 @@ class Index {
 		scene.add(this.createLight());
 		// 创建地面
 		scene.add(this.createGround(1000,1000));
+		this.gazeEvent = new GazeEvent();
 
 		// 创建立方体
-		this.cube = this.createCube();
-		scene.add(this.cube);
+		for (let i = 0; i < 100; i++) {
+			const cube = this.createCube(2,2,2 );
+			cube.position.set(
+				100*Math.random() - 50,
+				50*Math.random() -10,
+				100*Math.random() - 50
+			);
+			scene.add(cube);
 
-		this.gazeEvent = new GazeEvent();
-		this.gazeEvent.watch(this.cube,() => {
-			this.cube.material.opacity = 0.5;
-		},() => {
-			this.cube.material.opacity = 1;
-		});
+			this.gazeEvent.watch(cube,() => {
+				cube.material.opacity = 0.5;
+			},() => {
+				cube.material.opacity = 1;
+			});
+
+		}
 	}
 	initVR() {
 		const {renderer} = this;
@@ -110,42 +118,37 @@ class Index {
 	}
 	createCrosshair () {
 		// 创建准心
-		const crosshair = new THREE.Mesh(new THREE.RingGeometry( 0.02, 0.04, 32 ),new THREE.MeshBasicMaterial( {
+		const geometry = new THREE.RingGeometry( 0.02, 0.03, 32 );
+		const material = new THREE.MeshBasicMaterial({
 			color: 0xffffff,
 			opacity: 0.5,
 			transparent: true
-		}));
+		});
+		const crosshair = new THREE.Mesh(geometry,material);
 		crosshair.position.z = -2;
 		return crosshair;
 	}
-	createCube() {
+	createCube(width=2,height=2,depth=2,color=0xef6500) {
 		// 创建立方体
 
-		const geometry = new THREE.CubeGeometry( 2,2,2);
+		const geometry = new THREE.CubeGeometry(width,height,depth);
 		const material = new THREE.MeshLambertMaterial({ 
-			color: 0xef6500,
+			color: color,
 			needsUpdate: true,
 			opacity:1,
 			transparent:true
 		});
 		const cube = new THREE.Mesh( geometry, material );
-		cube.position.set(2,0,-5);
 		cube.castShadow = true;
 		return cube;
 	}
 	createLight() {
 		// 创建光线
         const light = new THREE.DirectionalLight( 0xffffff, 0.3 );
-		light.position.set( 3, 3, 2 );
+		light.position.set( 50, 50, -50 );
 		light.castShadow = true;
-		// light.shadow.mapSize.width = 2048;
-		// light.shadow.mapSize.height = 512;
-		// light.shadow.camera.near = 100;
-		// light.shadow.camera.far = 1200;
-		// light.shadow.camera.left = -1000;
-		// light.shadow.camera.right = 1000;
-		// light.shadow.camera.top = 350;
-		// light.shadow.camera.bottom = -350;
+		light.shadow.mapSize.width = 2048;
+		light.shadow.mapSize.height = 512;
 		return light;
 	}
 	createGround(width,height) {
@@ -162,7 +165,7 @@ class Index {
 		const {scene,camera,renderer,clock} = this;
 		const delta = clock.getDelta() * 60;
 		// 启动渲染
-		this.cube.rotation.y += 0.02 * delta;
+		// this.cube.rotation.y += 0.1 * delta;
 		this.gazeEvent.update(camera);
 		renderer.render(scene, camera);
 	}
@@ -210,8 +213,15 @@ class GazeEvent {
 		};
 		this.meshList = Object.keys(this.gazeList).map(key => this.gazeList[key].mesh);
 	}
+	off(mesh) {
+		delete this.gazeList[mesh.id];
+		this.meshList = Object.keys(this.gazeList).map(key => this.gazeList[key].mesh);
+	}
+	clear() {
+		this.gazeList = {},this.meshList = [];
+	}
 	update(camera) {
-
+		if (this.meshList.length <= 0) return;
 		//创建凝视器
 	    this.raycaster.setFromCamera(this.center,camera);
 	    const intersects = this.raycaster.intersectObjects(this.meshList);
