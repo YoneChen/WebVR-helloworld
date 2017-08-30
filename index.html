@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0, shrink-to-fit=no">
+	<title>webVR-helloworld</title>
+	<style>
+		* {
+			margin: 0;
+			padding: 0;
+		}
+		html,body {
+			height: 100%;
+		}
+		body {
+			font-size: 14px;
+			font-family: "Arial","Microsoft YaHei","黑体",sans-serif;
+			overflow: hidden;
+		}
+		.main-page {
+			position: relative;
+			height: 100%;
+		}
+		.vr-btn {
+			position: absolute;
+			right: 18px;
+			bottom: 18px;
+			padding: 8px 12px;
+			background-color: #00aadd;
+			text-align: center;
+			color: #fff;
+			font-size: 14px;
+			cursor: pointer;
+		}
+	</style>
+</head>
+<body>
+	<section class="main-page">
+		<div class="vr-btn">进入VR</div>
+	</section>
+</body>
+<script src="./docs/vendor/three.min.js"></script>
+<script>
+	/**
+** author:YorkChan
+** date:2017-08-18
+**/
+class Index {
+	constructor() {
+		// 初始化场景
+		this.scene = new THREE.Scene();
+		// 初始化相机
+		this.camera = new THREE.PerspectiveCamera(60,window.innerWidth/window.innerHeight,0.1,1000);
+		this.scene.add(this.camera);
+
+		// 初始化渲染器
+		this.renderer = new THREE.WebGLRenderer({ antialias: true } );
+		this.renderer.setSize(window.innerWidth,window.innerHeight);
+		this.renderer.setClearColor(0x519EcB);
+		this.renderer.shadowMapEnabled = true;
+		this.renderer.setPixelRatio(window.devicePixelRatio);
+		document.querySelector('.main-page').appendChild(this.renderer.domElement);
+
+		this.clock = new THREE.Clock();
+		// VR初始化
+		this.initVR();
+		// 往场景添加3d物体
+		this.start();
+		// 窗口大小调整监听
+		window.addEventListener( 'resize', this.resize.bind(this), false );
+		// 渲染动画
+		this.renderer.animate(this.update.bind(this));
+	}
+	start() {
+		const {scene,camera} = this;
+		// 创建准心
+		camera.add(this.createCrosshair());
+		// 创建光线
+		scene.add(new THREE.AmbientLight(0xFFFFFF));
+		scene.add(this.createLight());
+		// 创建地面
+		scene.add(this.createGround(1000,1000));
+		this.gazeEvent = new GazeEvent();
+
+		// 创建立方体
+		for (let i = 0; i < 100; i++) {
+			const cube = this.createCube(2,2,2 );
+			cube.position.set(
+				100*Math.random() - 50,
+				50*Math.random() -10,
+				100*Math.random() - 50
+			);
+			scene.add(cube);
+
+			this.gazeEvent.watch(cube,() => {
+				cube.material.opacity = 0.5;
+			},() => {
+				cube.material.opacity = 1;
+			});
+
+		}
+	}
+	initVR() {
+		const {renderer} = this;
+		renderer.vr.enabled = true;
+		navigator.getVRDisplays().then( display => {
+			renderer.vr.setDevice(display[0]);
+			const button = document.querySelector('.vr-btn');
+			VRButton.init(display[0],renderer,button,() => button.textContent = '退出VR',() => button.textContent = '进入VR');
+		}).catch(err => console.warn(err));
+	}
+	resize() {
+		const {camera,renderer} = this;
+		// 窗口调整重新调整渲染器
+		camera.aspect = window.innerWidth / window.innerHeight;
+		camera.updateProjectionMatrix();
+		renderer.setSize(window.innerWidth, window.innerHeight);
+	}
+	createCrosshair () {
+		// 创建准心
+		const geometry = new THREE.RingGeometry( 0.02, 0.03, 32 );
+		const material = new THREE.MeshBasicMaterial({
+			color: 0xffffff,
+			opacity: 0.5,
+			transparent: true
+		});
+		const crosshair = new THREE.Mesh(geometry,material);
+		crosshair.position.z = -2;
+		return crosshair;
+	}
+	createCube(width=2,height=2,depth=2,color=0xef6500) {
+		// 创建立方体
+
+		const geometry = new THREE.CubeGeometry(width,height,depth);
+		const material = new THREE.MeshLambertMaterial({ 
+			color: color,
+			needsUpdate: true,
+			opacity:1,
+			transparent:true
+		});
+		const cube = new THREE.Mesh( geometry, material );
+		cube.castShadow = true;
+		return cube;
+	}
+	createLight() {
+		// 创建光线
+        const light = new THREE.DirectionalLight( 0xffffff, 0.3 );
+		light.position.set( 50, 50, -50 );
+		light.castShadow = true;
+		light.shadow.mapSize.width = 2048;
+		light.shadow.mapSize.height = 512;
+		return light;
+	}
+	createGround(width,height) {
+		// 创建地平面
+		const geometry = new THREE.PlaneBufferGeometry( width, height );
+		const material = new THREE.MeshPhongMaterial( { color: 0xaaaaaa } );
+		const ground = new THREE.Mesh( geometry, material );
+		ground.rotation.x = - Math.PI / 2;
+		ground.position.y = -10;
+		ground.receiveShadow = true;
+		return ground;
+	}
+	update() {
+		const {scene,camera,renderer,clock} = this;
+		const delta = clock.getDelta() * 60;
+		// 启动渲染
+		// this.cube.rotation.y += 0.1 * delta;
+		this.gazeEvent.update(camera);
+		renderer.render(scene, camera);
+	}
+}
+// VR按钮控制
+const VRButton = {
+	init(display,renderer,button,enterVR,exitVR) {
+		
+		if ( display ) {
+			button.addEventListener('click', e => {
+
+				display.isPresenting ? display.exitPresent() : display.requestPresent( [ { source: renderer.domElement } ] );
+
+			});
+
+			window.addEventListener( 'vrdisplaypresentchange', e => {
+
+				display.isPresenting ? enterVR() : exitVR();
+
+			}, false );
+
+		} else {
+
+			button.remove();
+
+		}
+	}
+
+}
+// 凝视监听器
+class GazeEvent {
+	constructor() {
+		// 初始化射线发射源
+		this.raycaster = new THREE.Raycaster();
+		this.center = new THREE.Vector2();
+		this.gazeList = {},this.meshList = [];
+		this.Gazing = false;
+		this.target = null;
+	}
+	watch(mesh,gazeEnter,gazeExit) {
+		this.gazeList[mesh.id] = {
+			mesh,
+			gazeEnter,
+			gazeExit
+		};
+		this.meshList = Object.keys(this.gazeList).map(key => this.gazeList[key].mesh);
+	}
+	off(mesh) {
+		delete this.gazeList[mesh.id];
+		this.meshList = Object.keys(this.gazeList).map(key => this.gazeList[key].mesh);
+	}
+	clear() {
+		this.gazeList = {},this.meshList = [];
+	}
+	update(camera) {
+		if (this.meshList.length <= 0) return;
+		//创建凝视器
+	    this.raycaster.setFromCamera(this.center,camera);
+	    const intersects = this.raycaster.intersectObjects(this.meshList);
+	    
+	    if (intersects.length > 0) { //凝视触发
+	    	if(this.Gazing) return; //只触发一次
+	    	this.Gazing = true;
+	      	this.target = intersects[0].object;
+	      	this.gazeList[this.target.id].gazeEnter();
+	    } else{ 
+	    	this.Gazing && this.gazeList[this.target.id].gazeExit();
+	    	this.Gazing = false;
+	    	this.target = null;
+	    }
+	}
+}
+new Index();
+</script>
+</html>
