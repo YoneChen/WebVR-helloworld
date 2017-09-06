@@ -1,5 +1,6 @@
 # WebVR-helloworld
 a webVR 'hello world' project base in three.js
+
 ![WebVR未来新潮](http://upload-images.jianshu.io/upload_images/1939855-947df10d4260d1fc.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 去年谷歌和火狐针对WebVR提出了WebVR API的标准，顾名思义，WebVR即web + VR的体验方式，我们可以戴着头显享受沉浸式的网页，新的API标准让我们可以使用js语言来开发。今天，约克先森将介绍如何开发一个WebVR网页，在此之前，我们有必要了解WebVR的体验方式。
@@ -225,15 +226,11 @@ class WebVRApp {
     // 创建3d物体
 	start() {
 		const {scene,camera} = this;
-		// 创建准心
-		camera.add(this.createCrosshair());
 		// 创建光线
 		scene.add(new THREE.AmbientLight(0xFFFFFF));
 		scene.add(this.createLight());
 		// 创建地面
 		scene.add(this.createGround(1000,1000));
-		this.gazeEvent = new GazeEvent();
-
 		// 创建立方体
 		this.cube = this.createCube(2,2,2, 2,-1,-3);
 	}
@@ -256,18 +253,6 @@ class WebVRApp {
 		camera.aspect = window.innerWidth / window.innerHeight;
 		camera.updateProjectionMatrix();
 		renderer.setSize(window.innerWidth, window.innerHeight);
-	}
-	// 创建准心
-	createCrosshair () {
-		const geometry = new THREE.RingGeometry( 0.02, 0.03, 32 );
-		const material = new THREE.MeshBasicMaterial({
-			color: 0xffffff,
-			opacity: 0.5,
-			transparent: true
-		});
-		const crosshair = new THREE.Mesh(geometry,material);
-		crosshair.position.z = -2;
-		return crosshair;
 	}
 	createCube(width=2,height=2,depth=2, posX,posY,posZ) {
 		// 创建立方体
@@ -312,7 +297,6 @@ class WebVRApp {
 		const delta = clock.getDelta() * 60;
 		// 启动渲染
 		this.cube.rotation.y += 0.1 * delta;
-		this.gazeEvent.update(camera);
 		renderer.render(scene, camera);
 	}
 }

@@ -103,7 +103,9 @@ class Index {
 	initVR() {
 		const {renderer} = this;
 		renderer.vr.enabled = true;
+		// 获取VRDisplay实例
 		navigator.getVRDisplays().then( display => {
+			// 将display实例传给renderer渲染器
 			renderer.vr.setDevice(display[0]);
 			const button = document.querySelector('.vr-btn');
 			VRButton.init(display[0],renderer,button,() => button.textContent = '退出VR',() => button.textContent = '进入VR');
@@ -172,6 +174,13 @@ class Index {
 }
 // VR按钮控制
 const VRButton = {
+	/** 
+	 * @param {VRDisplay} display VRDisplay实例
+	 * @param {THREE.WebGLRenderer} renderer 渲染器
+	 * @param {HTMLElement} button VR控制按钮
+	 * @param {Function} enterVR 点击进入VR模式时回调
+	 * @param {Function} exitVR 点击退出VR模式时回调
+	 **/
 	init(display,renderer,button,enterVR,exitVR) {
 		
 		if ( display ) {
@@ -205,6 +214,11 @@ class GazeEvent {
 		this.Gazing = false;
 		this.target = null;
 	}
+	/** 
+	 * @param {THREE.Mesh} mesh 监听的3d网格
+	 * @param {Function} gazeEnter 凝视点首次进入物体触发 
+	 * @param {THREE.Mesh} gazeExit 凝视点首次离开物体
+	 **/
 	watch(mesh,gazeEnter,gazeExit) {
 		this.gazeList[mesh.id] = {
 			mesh,
