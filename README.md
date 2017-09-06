@@ -35,7 +35,7 @@ WebVR的概念大概就如此，这次我们将采用cardboard + mobile的方式
 >技术和框架：three.js for WebGL
 
 [Three.js](http://threejs.org)是构建3d场景的框架，它封装了WebGL函数，简化了创建场景的代码成本，利用three.js我们可以更优雅地创建出三维场景和三维动画，这里我使用的是0.86版本。
-如果想了解纯WebGL开发WebVR应用以及WebVR具体环境配置，可以参考 [webvr教程--深度剖析]()。
+如果想了解纯WebGL开发WebVR应用以及WebVR具体环境配置，可以参考 [webvr教程--深度剖析](https://zhuanlan.zhihu.com/p/28324884)。
 
 > 需要引入的js插件：
   1.[three.min.js](https://github.com/mrdoob/three.js/blob/dev/build/three.min.js)
