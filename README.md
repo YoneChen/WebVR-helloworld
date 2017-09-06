@@ -97,7 +97,7 @@ Three.js的渲染器用来渲染camera所看到的画面
 
 ```
 //初始化渲染器 antialias参数为ture表示开启抗锯齿策略
-const renderer = new THREE.WebGLRenderer({ antialias: true } );
+var renderer = new THREE.WebGLRenderer({ antialias: true } );
 //设置渲染器渲染尺寸
 renderer.setSize(window.innerWidth,window.innerHeight);
 //设置渲染背景为白色
@@ -110,9 +110,9 @@ document.body.appendChild(renderer.domElement);
 
 ```
 // 创建立方体
-const geometry = new THREE.CubeGeometry( 10,10,10);
-const material = new THREE.MeshLambertMaterial( { color: 0xef6500,needsUpdate: true,opacity:1,transparent:true} );
-const cube = new THREE.Mesh( geometry, material );
+var geometry = new THREE.CubeGeometry( 10,10,10);
+var material = new THREE.MeshLambertMaterial( { color: 0xef6500,needsUpdate: true,opacity:1,transparent:true} );
+var cube = new THREE.Mesh( geometry, material );
 cube.position.set(0,100,-50);
 cube.rotation.set(Math.PI/6,Math.PI/4,0);
 scene.add(cube);
@@ -147,10 +147,14 @@ vrdisplay是vr设备的实例，我们需要将它传给当前运行的renderer�
 ```
 function initVR(renderer) {
     renderer.vr.enabled = true;
-    navigator.getVRDisplays().then( display => {
+    navigator.getVRDisplays().then( function(display) {
         renderer.vr.setDevice(display[0]);
         const button = document.querySelector('.vr-btn');
-        VRbutton(display[0],renderer,button,() => button.textContent = '退出VR',() => button.textContent = '进入VR');
+        VRbutton(display[0],renderer,button,function() {
+            button.textContent = '退出VR';
+        },function() {
+            button.textContent = '进入VR';
+        });
     }).catch(err => console.warn(err));
 }
 
@@ -160,34 +164,30 @@ function initVR(renderer) {
 2. 当前非VR模式，点击按钮进入VR模式，此时调用`display.requestPresent()`，`display.isPresenting`被设置为true，触发window的`vrdisplaypresentchange`事件
 3. 当前为VR模式，点击按钮退出模式，此时调用`display.exitPresent()`，`display.isPresenting`被设置为false，触发window的`vrdisplaypresentchange`事件
 ```
-// VR按钮控制
-const VRbutton = {
-	/** 
-	 * @param {VRDisplay} display VRDisplay实例
-	 * @param {THREE.WebGLRenderer} renderer 渲染器
-	 * @param {HTMLElement} button VR控制按钮
-	 * @param {Function} enterVR 点击进入VR模式时回调
-	 * @param {Function} exitVR 点击退出VR模式时回调
-	 **/
-    init(display,renderer,button,enterVR = () => {},exitVR = () => {}) {
-        
-        if ( display ) {
-            button.addEventListener('click', e => {
-                // 点击vr按钮控制`isPresenting`状态
-                display.isPresenting ? display.exitPresent() : display.requestPresent( [ { source: renderer.domElement } ] );
+/**  VR按钮控制
+    * @param {VRDisplay} display VRDisplay实例
+    * @param {THREE.WebGLRenderer} renderer 渲染器
+    * @param {HTMLElement} button VR控制按钮
+    * @param {Function} enterVR 点击进入VR模式时回调
+    * @param {Function} exitVR 点击退出VR模式时回调
+    **/
+function VRbutton(display,renderer,button,enterVR,exitVR) {
+    if ( display ) {
+        button.addEventListener('click', function() {
+            // 点击vr按钮控制`isPresenting`状态
+            display.isPresenting ? display.exitPresent() : display.requestPresent( [ { source: renderer.domElement } ] );
 
-            });
+        });
 
-            window.addEventListener( 'vrdisplaypresentchange', e => {
-                // 是否处于vr体验模式中，是则触发enterVR，否则触发exitVR
-                display.isPresenting ? enterVR() : exitVR();
-            }, false );
+        window.addEventListener( 'vrdisplaypresentchange', function() {
+            // 是否处于vr体验模式中，是则触发enterVR，否则触发exitVR
+            display.isPresenting ? enterVR() : exitVR();
+        }, false );
 
-        } else {
-            // 找不到vr设备实例，则移除按钮
-            button.remove();
+    } else {
+        // 找不到vr设备实例，则移除按钮
+        button.remove();
 
-        }
     }
 }
 
@@ -195,7 +195,7 @@ const VRbutton = {
 我们可以在`vrdisplaypresentchange`事件中根据`isPresenting`的值来改变按钮的UI，而three.js将根据`isPresenting`的值来决定是常规渲染还是vr模式渲染，在vr模式下，three.js将创建两个camera进行渲染。
 
 
-最后，将WebVR应用写成一个class，具体代码如下：
+最后，将WebVR应用写成ES6 class，具体代码如下：
 ```
 class WebVRApp {
 	constructor() {
@@ -264,11 +264,11 @@ class WebVRApp {
 			transparent:true
 		});
 		const cube = new THREE.Mesh( geometry, material );
-        cube.position.set({
-            x: posX,
-            y: posY,
-            z: posZ
-        });
+		cube.position.set({
+			x: posX,
+			y: posY,
+			z: posZ
+		});
 		cube.castShadow = true;
 		return cube;
 	}
