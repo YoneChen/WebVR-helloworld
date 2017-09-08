@@ -3,7 +3,7 @@ a webVR 'hello world' project base in three.js
 
 ![WebVR未来新潮](http://upload-images.jianshu.io/upload_images/1939855-947df10d4260d1fc.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
-去年谷歌和火狐针对WebVR提出了WebVR API的标准，顾名思义，WebVR即web + VR的体验方式，我们可以戴着头显享受沉浸式的网页，新的API标准让我们可以使用js语言来开发。今天，约克先森将介绍如何开发一个WebVR网页，在此之前，我们有必要了解WebVR的体验方式。
+WebVR即web + VR的体验方式，我们可以戴着头显享受沉浸式的网页，新的API标准让我们可以使用js语言来开发。本文将介绍如何快速开发一个WebVR网页，在此之前，我们有必要了解WebVR的体验方式。
 
 ### WebVR体验模式
 ---
@@ -209,7 +209,6 @@ class WebVRApp {
 		this.renderer = new THREE.WebGLRenderer({ antialias: true } );
 		this.renderer.setSize(window.innerWidth,window.innerHeight);
 		this.renderer.setClearColor(0x519EcB);
-		this.renderer.shadowMapEnabled = true;
 		this.renderer.setPixelRatio(window.devicePixelRatio);
 		document.querySelector('.main-page').appendChild(this.renderer.domElement);
 
@@ -269,17 +268,7 @@ class WebVRApp {
 			y: posY,
 			z: posZ
 		});
-		cube.castShadow = true;
 		return cube;
-	}
-	createLight() {
-		// 创建光线
-        const light = new THREE.DirectionalLight( 0xffffff, 0.3 );
-		light.position.set( 50, 50, -50 );
-		light.castShadow = true;
-		light.shadow.mapSize.width = 2048;
-		light.shadow.mapSize.height = 512;
-		return light;
 	}
 	createGround(width,height) {
 		// 创建地平面
@@ -288,7 +277,6 @@ class WebVRApp {
 		const ground = new THREE.Mesh( geometry, material );
 		ground.rotation.x = - Math.PI / 2;
 		ground.position.y = -10;
-		ground.receiveShadow = true;
 		return ground;
 	}
     // 动画更新

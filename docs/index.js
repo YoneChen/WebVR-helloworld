@@ -31,22 +31,11 @@ Index.prototype = {
 		this.createGround(1000,1000);
 
 		this.initGaze();
-		// 初始化VR视觉控件
-		this.initVR();
 		// 创建立方体
 		this.createCube();
 		// 事件绑定
 		this.bindEvent();
-		this.render();
-	},
-	initVR() {
-		// 初始化VR视觉控件
-  		this.effect = new THREE.VREffect(this.renderer);
-  		this.controls = new THREE.VRControls(this.camera);
-  		// this.controls.standing = true;
-
-		// Initialize the WebVR manager.
-		this.manager = new WebVRManager(this.renderer, this.effect);
+		this.renderer.animate(this.render.bind(this));
 	},
 	bindEvent: function() {
 		var self = this;
@@ -54,7 +43,7 @@ Index.prototype = {
 			// 窗口调整重新调整渲染器
 			self.camera.aspect = window.innerWidth / window.innerHeight;
 			self.camera.updateProjectionMatrix();
-			self.effect.setSize(window.innerWidth, window.innerHeight);
+			self.renderer.setSize(window.innerWidth, window.innerHeight);
 		}, false );
 	},
 	createCube: function () {
@@ -133,15 +122,9 @@ Index.prototype = {
 	},
 	render: function() {
 		// 启动渲染
-		var self = this;
-		var render = function() {
-			self.Cube.rotation.y += 0.01;
-			self.gaze();
-			self.controls.update();
-			self.manager.render(self.scene, self.camera);
-			requestAnimationFrame(render);
-		}
-		render();
+		this.Cube.rotation.y += 0.01;
+		this.gaze();
+		this.renderer.render(this.scene, this.camera);
 	}
 };
 
