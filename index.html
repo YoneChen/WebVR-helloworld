@@ -83,7 +83,7 @@ class Index {
 		scene.add(this.createLight());
 		// 创建地面
 		scene.add(this.createGround(1000,1000));
-		this.gazeEvent = new GazeEvent();
+		this.gazer = new Gazer();
 
 		// 创建立方体
 		for (let i = 0; i < 100; i++) {
@@ -95,7 +95,7 @@ class Index {
 			);
 			scene.add(cube);
 
-			this.gazeEvent.watch(cube,() => {
+			this.gazer.watch(cube,() => {
 				cube.material.opacity = 0.5;
 			},() => {
 				cube.material.opacity = 1;
@@ -170,8 +170,7 @@ class Index {
 		const {scene,camera,renderer,clock} = this;
 		const delta = clock.getDelta() * 60;
 		// 启动渲染
-		// this.cube.rotation.y += 0.1 * delta;
-		this.gazeEvent.update(camera);
+		this.gazer.update(camera);
 		renderer.render(scene, camera);
 	}
 }
@@ -208,50 +207,52 @@ const VRButton = {
 
 }
 // 凝视监听器
-class GazeEvent {
+class Gazer {
 	constructor() {
 		// 初始化射线发射源
 		this.raycaster = new THREE.Raycaster();
 		this.center = new THREE.Vector2();
-		this.gazeList = {},this.meshList = [];
-		this.Gazing = false;
-		this.target = null;
+		this.rayList = {},this.targetList = [];
+		this.lastTarget = null;
+	}
+	get target() {
+		return this.lastTarget;
 	}
 	/** 
-	 * @param {THREE.Mesh} mesh 监听的3d网格
-	 * @param {Function} gazeEnter 凝视点首次进入物体触发 
-	 * @param {THREE.Mesh} gazeExit 凝视点首次离开物体
+	 * @param {THREE.Mesh} target 监听的3d网格
+	 * @param {Function} rayEnter 射线首次进入物体触发 
+	 * @param {Function} rayExit 射线首次离开物体触发
 	 **/
-	watch(mesh,gazeEnter,gazeExit) {
-		this.gazeList[mesh.id] = {
-			mesh,
-			gazeEnter,
-			gazeExit
-		};
-		this.meshList = Object.keys(this.gazeList).map(key => this.gazeList[key].mesh);
+	watch(target, rayEnter = () => {}, rayExit = () => {}) {
+		this.rayList[target.id] = { target, rayEnter, rayExit };
+		this.targetList = Object.keys(this.rayList).map(key => this.rayList[key].target);
 	}
-	off(mesh) {
-		delete this.gazeList[mesh.id];
-		this.meshList = Object.keys(this.gazeList).map(key => this.gazeList[key].mesh);
+	off(target) {
+		delete this.rayList[target.id];
+		this.targetList = Object.keys(this.rayList).map(key => this.rayList[key].target);
 	}
 	clear() {
-		this.gazeList = {},this.meshList = [];
+		this.rayList = {},this.targetList = [];
 	}
-	update(camera) {
-		if (this.meshList.length <= 0) return;
-		//创建凝视器
-	    this.raycaster.setFromCamera(this.center,camera);
-	    const intersects = this.raycaster.intersectObjects(this.meshList);
+	update(origin, direction ) {
+		if (this.targetList.length <= 0) return;
+        //创建凝视器
+	    this.raycaster.setFromCamera(this.center,origin);
+	    const intersects = this.raycaster.intersectObjects(this.targetList);
 	    
-	    if (intersects.length > 0) { //凝视触发
-	    	if(this.Gazing) return; //只触发一次
-	    	this.Gazing = true;
-	      	this.target = intersects[0].object;
-	      	this.gazeList[this.target.id].gazeEnter();
-	    } else{ 
-	    	this.Gazing && this.gazeList[this.target.id].gazeExit();
-	    	this.Gazing = false;
-	    	this.target = null;
+        if (intersects.length > 0) { //凝视触发
+            this.intersection = intersects[0];
+            const currentTarget = this.intersection.object;
+            // 如果是首次进入物体，则触发rayEnter
+            if (this.lastTarget && this.lastTarget.id === currentTarget.id) return; 
+			this.lastTarget && this.rayList[this.lastTarget.id].rayExit();
+	      	this.rayList[currentTarget.id].rayEnter();
+            this.lastTarget = currentTarget;
+	    } else { 
+            this.intersection = null;
+            // 如果是离开物体，则触发rayExit
+            if ( this.lastTarget ) this.rayList[this.lastTarget.id].rayExit();
+	    	this.lastTarget = null;
 	    }
 	}
 }

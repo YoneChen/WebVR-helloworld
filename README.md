@@ -195,7 +195,11 @@ function VRbutton(display,renderer,button,enterVR,exitVR) {
 我们可以在`vrdisplaypresentchange`事件中根据`isPresenting`的值来改变按钮的UI，而three.js将根据`isPresenting`的值来决定是常规渲染还是vr模式渲染，在vr模式下，three.js将创建两个camera进行渲染。
 
 
-最后，将WebVR应用写成ES6 class，具体代码如下：
+最后，将WebVR应用写成ES6 class，后面开发流程将按如下图结构来规范代码：
+
+![WebVRApp类](http://upload-images.jianshu.io/upload_images/1939855-31753712dac7bc76.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+第一步，构造函数先初始化VR场景、相机和渲染器；第二步，在渲染之前调用start方法，在start方法里我们为场景创建3d物体；最后，调起`renderer.animate(this.update)`开启动画渲染，update方法里我们可动态操作物体属性，具体代码如下：
 ```
 class WebVRApp {
 	constructor() {
@@ -295,9 +299,3 @@ new WebVRApp();
 完整代码：[github.com/YoneChen/WebVR-helloworld](https://github.com/YoneChen/WebVR-helloworld)。
 
 结语：目前，国外的谷歌、火狐、Facebook和国内百度已推出支持WebVR浏览器的版本，微软也宣布将推出自己的VR浏览器，随着后期5g网络极速时代的到来以及HMD头显的价格和平台的成熟，WebVR的体验方式将是革命性的，用户通过WebVR浏览网上商店，线上教学可进行“面对面”师生交流等，基于这种种应用场景，我们可以找到一个更好的动力去学习WebVR。
-
-参考链接：
-[responisve WebVR](http://smus.com/responsive-vr/): 探讨WebVR在不同头显(HMD)的适配方案
-[MolizaVR example](https://mozvr.com/#showcase): 火狐WebVR示例
-[webvr-boilerplate](https://github.com/borismus/webvr-boilerplate): A starting point for web-based VR experiences that work on all VR headsets.
-[how to build webvr](https://www.sitepoint.com/how-to-build-vr-on-the-web-today/): How to Build VR on the Web Today
