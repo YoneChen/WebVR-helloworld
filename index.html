@@ -95,10 +95,15 @@ class Index {
 			);
 			scene.add(cube);
 
-			this.gazer.watch(cube,() => {
+			this.gazer.on(cube,'gazeEnter',() => {
 				cube.material.opacity = 0.5;
-			},() => {
+			});
+			this.gazer.on(cube,'gazeExit',() => {
 				cube.material.opacity = 1;
+				cube.scale.set(1,1,1);
+			});
+			this.gazer.on(cube,'gazeTrigger',() => {
+				cube.scale.set(1.5,1.5,1.5);
 			});
 
 		}
@@ -211,20 +216,28 @@ class Gazer {
 	constructor() {
 		// 初始化射线发射源
 		this.raycaster = new THREE.Raycaster();
-		this.center = new THREE.Vector2();
+		this._center = new THREE.Vector2();
 		this.rayList = {},this.targetList = [];
-		this.lastTarget = null;
+		this._lastTarget = null,this._clicked = false;
+		window.addEventListener('click', e => this._clicked = true);
 	}
 	get target() {
-		return this.lastTarget;
+		return this._lastTarget;
 	}
 	/** 
 	 * @param {THREE.Mesh} target 监听的3d网格
 	 * @param {Function} rayEnter 射线首次进入物体触发 
 	 * @param {Function} rayExit 射线首次离开物体触发
 	 **/
-	watch(target, rayEnter = () => {}, rayExit = () => {}) {
-		this.rayList[target.id] = { target, rayEnter, rayExit };
+	on(target, eventType, callback) {
+		const noop = () => {};
+		if (!this.rayList[target.id]) this.rayList[target.id] = {
+			target,
+			gazeEnter: noop,
+			gazeExit: noop,
+			gazeTrigger: noop
+		};
+		this.rayList[target.id][eventType] = callback;
 		this.targetList = Object.keys(this.rayList).map(key => this.rayList[key].target);
 	}
 	off(target) {
@@ -234,26 +247,28 @@ class Gazer {
 	clear() {
 		this.rayList = {},this.targetList = [];
 	}
-	update(origin, direction ) {
+	update(camera) {
 		if (this.targetList.length <= 0) return;
         //创建凝视器
-	    this.raycaster.setFromCamera(this.center,origin);
+	    this.raycaster.setFromCamera(this._center,camera);
 	    const intersects = this.raycaster.intersectObjects(this.targetList);
 	    
         if (intersects.length > 0) { //凝视触发
             this.intersection = intersects[0];
-            const currentTarget = this.intersection.object;
+			const currentTarget = this.intersection.object;
+			if (this._clicked) this.rayList[this._lastTarget.id].gazeTrigger();
             // 如果是首次进入物体，则触发rayEnter
-            if (this.lastTarget && this.lastTarget.id === currentTarget.id) return; 
-			this.lastTarget && this.rayList[this.lastTarget.id].rayExit();
-	      	this.rayList[currentTarget.id].rayEnter();
-            this.lastTarget = currentTarget;
+            if (this._lastTarget && this._lastTarget.id === currentTarget.id) return; 
+			this._lastTarget && this.rayList[this._lastTarget.id].gazeExit();
+	      	this.rayList[currentTarget.id].gazeEnter();
+            this._lastTarget = currentTarget;
 	    } else { 
             this.intersection = null;
             // 如果是离开物体，则触发rayExit
-            if ( this.lastTarget ) this.rayList[this.lastTarget.id].rayExit();
-	    	this.lastTarget = null;
+            if ( this._lastTarget ) this.rayList[this._lastTarget.id].gazeExit();
+	    	this._lastTarget = null;
 	    }
+		this._clicked = false;
 	}
 }
 new Index();
