@@ -234,8 +234,8 @@ class Gazer {
 	/** 
 	 * @param {THREE.Mesh} target 监听的3d网格
 	 * @param {String} eventType 事件类型 
-     *      'gazeEnter': '射线首次进入物体触发', 
-     *      'gazeTrigger': '射线进入物体触发', 
+     *      'gazeEnter': '射线击中物体触发一次', 
+     *      'gazeTrigger': '射线击中物体触发', 
      *      'gazeLeave': '射线离开物体触发'
 	 * @param {Function} callback 事件回调
 	 **/
@@ -267,11 +267,11 @@ class Gazer {
 			const currentTarget = this.intersection.object;
 	        const targetChanged = this._lastTarget && this._lastTarget.id !== currentTarget.id; // 射线是否从A物体切换至B物体
 
-            if (targetChanged) this.rayList[this._lastTarget.id].gazeLeave();
+            if (targetChanged) this.rayList[this._lastTarget.id].gazeLeave(); // 射线从A物体离开，触发A物体的gazeLeave事件
             
-            // 如果是首次进入物体，则触发rayEnter，否则返回
-            if (!this._lastTarget || targetChanged) this.rayList[currentTarget.id].gazeEnter();
-            this.rayList[currentTarget.id].gazeTrigger();
+            if (!this._lastTarget || targetChanged) this.rayList[currentTarget.id].gazeEnter(); // 射线进入B物体，触发B物体的gazeEnter事件
+
+            this.rayList[currentTarget.id].gazeTrigger(); // 射线在B物体上，触发B物体的gazeTrigger事件
 	      	
             this._lastTarget = currentTarget;
 	    } else { 
