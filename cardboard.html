@@ -3,7 +3,7 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0, shrink-to-fit=no">
-	<title>webVR-helloworld</title>
+	<title>cardboard-gaze</title>
 	<style>
 		* {
 			margin: 0;
@@ -69,23 +69,52 @@ class WebVRApp {
 		this.initVR();
 		// 往场景添加3d物体
 		this.start();
-		// 窗口大小调整监听
-		window.addEventListener( 'resize', this.resize.bind(this), false );
+        this.bindEvent();
 		// 渲染动画
 		this.renderer.animate(this.update.bind(this));
 	}
+    bindEvent() {
+		// 窗口大小调整监听
+		window.addEventListener( 'resize', this.resize.bind(this), false );
+        window.addEventListener('click', e => this.state._clicked = true, false );
+    }
 	start() {
 		const {scene,camera} = this;
+        this.state = {
+            _clicked: false
+        };
+		// 创建准心
+		camera.add(this.createCrosshair());
 		// 创建光线
 		scene.add(new THREE.AmbientLight(0xFFFFFF));
 		scene.add(this.createLight());
 		// 创建地面
 		scene.add(this.createGround(1000,1000));
-		// 创建立方体
-		this.cube = this.createCube(5,5,5);
-		this.cube.position.set(12,2,-100);
-		scene.add(this.cube);
+		this.gazer = new Gazer();
 
+		// 创建立方体
+		for (let i = 0; i < 100; i++) {
+			const cube = this.createCube(2,2,2 );
+			cube.position.set(
+				100*Math.random() - 50,
+				50*Math.random() -10,
+				100*Math.random() - 50
+			);
+			scene.add(cube);
+
+			this.gazer.on(cube,'gazeEnter',() => {
+				cube.material.opacity = 0.5;
+			});
+			this.gazer.on(cube,'gazeLeave',() => {
+				cube.material.opacity = 1;
+				cube.scale.set(1,1,1);
+			});
+			this.gazer.on(cube,'gazeTrigger',() => {
+				if (this.state._clicked) cube.scale.set(1.5,1.5,1.5);
+                this.state._clicked = false;
+			});
+
+		}
 	}
 	initVR() {
 		const {renderer} = this;
@@ -104,6 +133,18 @@ class WebVRApp {
 		camera.aspect = window.innerWidth / window.innerHeight;
 		camera.updateProjectionMatrix();
 		renderer.setSize(window.innerWidth, window.innerHeight);
+	}
+	createCrosshair () {
+		// 创建准心
+		const geometry = new THREE.RingGeometry( 0.02, 0.03, 32 );
+		const material = new THREE.MeshBasicMaterial({
+			color: 0xffffff,
+			opacity: 0.5,
+			transparent: true
+		});
+		const crosshair = new THREE.Mesh(geometry,material);
+		crosshair.position.z = -2;
+		return crosshair;
 	}
 	createCube(width=2,height=2,depth=2,color=0xef6500) {
 		// 创建立方体
@@ -139,9 +180,10 @@ class WebVRApp {
 		return ground;
 	}
 	update() {
-		const {scene,camera,renderer} = this;
+		const {scene,camera,renderer,clock} = this;
+		const delta = clock.getDelta() * 60;
 		// 启动渲染
-		this.cube.position.z += 0.1;
+		this.gazer.update(camera);
 		renderer.render(scene, camera);
 	}
 }
@@ -176,6 +218,69 @@ const VRButton = {
 		}
 	}
 
+}
+// 凝视监听器
+class Gazer {
+	constructor() {
+		// 初始化射线发射源
+		this.raycaster = new THREE.Raycaster();
+		this._center = new THREE.Vector2();
+		this.rayList = {},this.targetList = [];
+		this._lastTarget = null;
+	}
+	get target() {
+		return this._lastTarget;
+	}
+	/** 
+	 * @param {THREE.Mesh} target 监听的3d网格
+	 * @param {String} eventType 事件类型 
+     *      'gazeEnter': '射线首次进入物体触发', 
+     *      'gazeTrigger': '射线进入物体触发', 
+     *      'gazeLeave': '射线离开物体触发'
+	 * @param {Function} callback 事件回调
+	 **/
+	on(target, eventType, callback) {
+		const noop = () => {};
+		if (!this.rayList[target.id]) this.rayList[target.id] = {
+			target,
+			gazeEnter: noop,
+			gazeTrigger: noop,
+			gazeLeave: noop
+		};
+		this.rayList[target.id][eventType] = callback;
+		this.targetList = Object.keys(this.rayList).map(key => this.rayList[key].target);
+	}
+	off(target) {
+		delete this.rayList[target.id];
+		this.targetList = Object.keys(this.rayList).map(key => this.rayList[key].target);
+	}
+	clear() {
+		this.rayList = {},this.targetList = [];
+	}
+	update(camera) {
+		if (this.targetList.length <= 0) return;
+        //创建凝视器
+	    this.raycaster.setFromCamera(this._center,camera);
+	    const intersects = this.raycaster.intersectObjects(this.targetList);
+        if (intersects.length > 0) { //凝视触发
+            this.intersection = intersects[0];
+			const currentTarget = this.intersection.object;
+	        const targetChanged = this._lastTarget && this._lastTarget.id !== currentTarget.id; // 射线是否从A物体切换至B物体
+
+            if (targetChanged) this.rayList[this._lastTarget.id].gazeLeave();
+            
+            // 如果是首次进入物体，则触发rayEnter，否则返回
+            if (!this._lastTarget || targetChanged) this.rayList[currentTarget.id].gazeEnter();
+            this.rayList[currentTarget.id].gazeTrigger();
+	      	
+            this._lastTarget = currentTarget;
+	    } else { 
+            this.intersection = null;
+            // 如果是离开物体，则触发gazeLeave
+            if ( this._lastTarget ) this.rayList[this._lastTarget.id].gazeLeave();
+	    	this._lastTarget = null;
+	    }
+	}
 }
 new WebVRApp();
 </script>
