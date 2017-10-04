@@ -170,7 +170,6 @@ class WebVRApp {
                 .to({thetaLength: 2 * Math.PI}, this.state._duration)
                 .onUpdate(function() {
                     loader.geometry = new THREE.RingGeometry( 0.005, 0.007, 32, 8, 0, this.thetaLength);
-                    // loader.geometry.rotateY(Math.PI);
                     loader.geometry.verticesNeedUpdate = true;
                 })
                 .onStop(function() {
