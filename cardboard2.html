@@ -155,19 +155,22 @@ class WebVRApp {
 	    const geometry1 = new THREE.CircleGeometry( 0.002, 16 );
 		const material = new THREE.MeshBasicMaterial({
 			color: 0xffffff,
-			opacity: 0.5,
+            opacity: 0.5,
+            side: THREE.DoubleSide,
             transparent: true,
             needsUpdate: true
 		});
         const pointer = new THREE.Mesh(geometry1,material);
         pointer.name = 'pointer';
 		const geometry2 = new THREE.Geometry();
-	    const loader = new THREE.Mesh(geometry2,material);
+        const loader = new THREE.Mesh(geometry2,material);
+        loader.rotation.set(0,Math.PI,Math.PI/2);
         loader.name = 'loader';
         this.animate.loader = new TWEEN.Tween({thetaLength: 0})
                 .to({thetaLength: 2 * Math.PI}, this.state._duration)
                 .onUpdate(function() {
                     loader.geometry = new THREE.RingGeometry( 0.005, 0.007, 32, 8, 0, this.thetaLength);
+                    // loader.geometry.rotateY(Math.PI);
                     loader.geometry.verticesNeedUpdate = true;
                 })
                 .onStop(function() {
@@ -263,8 +266,8 @@ class Gazer {
 		// 初始化射线发射源
 		this.raycaster = new THREE.Raycaster();
 		this._center = new THREE.Vector2();
-		this.rayList = {},this.targetList = [];
-		this._lastTarget = null;
+        this.rayList = {},this.targetList = [];
+        this._intersection = null,this._lastTarget = null;
 	}
 	get target() {
 		return this._lastTarget;
@@ -301,21 +304,20 @@ class Gazer {
 	    this.raycaster.setFromCamera(this._center,camera);
 	    const intersects = this.raycaster.intersectObjects(this.targetList);
         if (intersects.length > 0) { //凝视触发
-            this.intersection = intersects[0];
-			const currentTarget = this.intersection.object;
+            const intersection = intersects[0],currentTarget = intersection.object;
 	        const targetChanged = this._lastTarget && this._lastTarget.id !== currentTarget.id; // 射线是否从A物体切换至B物体
 
-            if (targetChanged) this.rayList[this._lastTarget.id].gazeLeave(); // 射线从A物体离开，触发A物体的gazeLeave事件
+            if (targetChanged) this.rayList[this._lastTarget.id].gazeLeave(this._intersection); // 射线从A物体离开，触发A物体的gazeLeave事件
             
-            if (!this._lastTarget || targetChanged) this.rayList[currentTarget.id].gazeEnter(); // 射线进入B物体，触发B物体的gazeEnter事件
+            if (!this._lastTarget || targetChanged) this.rayList[currentTarget.id].gazeEnter(intersection); // 射线进入B物体，触发B物体的gazeEnter事件
 
-            this.rayList[currentTarget.id].gazeTrigger(); // 射线在B物体上，触发B物体的gazeTrigger事件
-	      	
+            this.rayList[currentTarget.id].gazeTrigger(intersection); // 射线在B物体上，触发B物体的gazeTrigger事件
+            this.intersection = intersection;
             this._lastTarget = currentTarget;
 	    } else { 
-            this.intersection = null;
             // 如果是离开物体，则触发gazeLeave
-            if ( this._lastTarget ) this.rayList[this._lastTarget.id].gazeLeave();
+            if ( this._lastTarget ) this.rayList[this._lastTarget.id].gazeLeave(this._intersection);
+            this.intersection = null;
 	    	this._lastTarget = null;
 	    }
 	}
