@@ -77,9 +77,16 @@ class WebVRApp {
     bindEvent() {
 		// 窗口大小调整监听
 		window.addEventListener( 'resize', this.resize.bind(this), false );
+        window.addEventListener('click', e => this.state._clicked = true, false );
     }
 	start() {
 		const {scene,camera} = this;
+        this.state = {
+            _clicked: false,
+            _wait: false,
+            _duration: 1500
+        };
+        this.animate = {};
 		// 创建准心
 		camera.add(this.createCrosshair());
 		// 创建光线
@@ -100,11 +107,29 @@ class WebVRApp {
 			scene.add(cube);
 
 			this.gazer.on(cube,'gazeEnter',() => {
-				cube.material.opacity = 0.5;
+                this.state._wait = true;
+                this.animate.loader.start();
+                this.state.gazeEnterTime = Date.now();
 			});
 			this.gazer.on(cube,'gazeLeave',() => {
-				cube.material.opacity = 1;
+                this.animate.loader.stop();
+                cube.scale.set(1,1,1);
+                cube.material.opacity = 1;
 			});
+			this.gazer.on(cube,'gazeTrigger',() => {
+                // gazeClick
+				if (this.state._clicked) {
+                    this.state._clicked = false;
+                    cube.scale.set(1.5,1.5,1.5);
+                }
+                // gazeWait
+                if (this.state._wait && Date.now() - this.state.gazeEnterTime > this.state._duration) {
+                    this.animate.loader.stop();
+                    this.state._wait = false;
+                    cube.material.opacity = 0.5;
+                }
+			});
+
 		}
 	}
 	initVR() {
@@ -125,18 +150,39 @@ class WebVRApp {
 		camera.updateProjectionMatrix();
 		renderer.setSize(window.innerWidth, window.innerHeight);
 	}
-	createCrosshair () {
+	createCrosshair() {
 		// 创建准心
-        const geometry = new THREE.CircleGeometry( 0.002, 16 );
-        const material = new THREE.MeshBasicMaterial({
-            color: 0xffffff,
-            opacity: 0.5,
-            transparent: true
-        });
-        const crosshair = new THREE.Mesh(geometry,material);
+	    const geometry1 = new THREE.CircleGeometry( 0.002, 16 );
+		const material = new THREE.MeshBasicMaterial({
+			color: 0xffffff,
+			opacity: 0.5,
+            transparent: true,
+            needsUpdate: true
+		});
+        const pointer = new THREE.Mesh(geometry1,material);
+        pointer.name = 'pointer';
+		const geometry2 = new THREE.Geometry();
+	    const loader = new THREE.Mesh(geometry2,material);
+        loader.name = 'loader';
+        this.animate.loader = new TWEEN.Tween({thetaLength: 0})
+                .to({thetaLength: 2 * Math.PI}, this.state._duration)
+                .onUpdate(function() {
+                    loader.geometry = new THREE.RingGeometry( 0.005, 0.007, 32, 8, 0, this.thetaLength);
+                    loader.geometry.verticesNeedUpdate = true;
+                })
+                .onStop(function() {
+                    this.thetaLength = 0;
+                    loader.geometry = new THREE.Geometry();
+                });
+        const crosshair = new THREE.Group();
+        crosshair.add(pointer);
+        crosshair.add(loader);
         crosshair.position.z = -0.5;
+        crosshair.matrixAutoUpdate  = false;
+        crosshair.updateMatrix();
+        console.log(crosshair);
         return crosshair;
-	}
+    }
 	createCube(width=2,height=2,depth=2,color=0xef6500) {
 		// 创建立方体
 
@@ -174,8 +220,9 @@ class WebVRApp {
 		const {scene,camera,renderer,clock} = this;
 		const delta = clock.getDelta() * 60;
 		// 启动渲染
+        TWEEN.update();
 		this.gazer.update(camera);
-		renderer.render(scene, camera);
+        renderer.render(scene, camera);
 	}
 }
 // VR按钮控制
