@@ -250,25 +250,25 @@ class Gazer {
 	}
 	update(camera) {
 		if (this.targetList.length <= 0) return;
-        //创建凝视器
+        //更新射线位置
 	    this.raycaster.setFromCamera(this._center,camera);
-	    const intersects = this.raycaster.intersectObjects(this.targetList);
-        if (intersects.length > 0) { //凝视触发
-            this.intersection = intersects[0];
-			const currentTarget = this.intersection.object;
-	        const targetChanged = this._lastTarget && this._lastTarget.id !== currentTarget.id; // 射线是否从A物体切换至B物体
-
-            if (targetChanged) this.rayList[this._lastTarget.id].gazeLeave(); // 射线从A物体离开，触发A物体的gazeLeave事件
-            
-            if (!this._lastTarget || targetChanged) this.rayList[currentTarget.id].gazeEnter(); // 射线进入B物体，触发B物体的gazeEnter事件
-
-            this.rayList[currentTarget.id].gazeTrigger(); // 射线在B物体上，触发B物体的gazeTrigger事件
-	      	
+        const intersects = this.raycaster.intersectObjects(this.targetList);
+        
+        if (intersects.length > 0) { // 当前帧射线击中物体
+            const currentTarget = intersects[0].object;
+            if (this._lastTarget) { // 上一帧射线击中物体
+                if (this._lastTarget.id !== currentTarget.id) { 
+                    // 上一帧射线击中物体与当前帧不同，触发上一帧物体的gazeLeave事件，触发当前帧物体的gazeEnter事件
+                    this.rayList[this._lastTarget.id].gazeLeave(); 
+                    this.rayList[currentTarget.id].gazeEnter();
+                }
+            } else { // 上一帧射线未击中物体
+                this.rayList[currentTarget.id].gazeEnter(); // 上一帧射线没有击中物体，触发当前帧物体的gazeEnter事件
+            }
+            this.rayList[currentTarget.id].gazeTrigger(); // 当前帧射线击中物体，触发物体的gazeTrigger事件
             this._lastTarget = currentTarget;
-	    } else { 
-            this.intersection = null;
-            // 如果是离开物体，则触发gazeLeave
-            if ( this._lastTarget ) this.rayList[this._lastTarget.id].gazeLeave();
+	    } else { // 当前帧我击中物体
+            if ( this._lastTarget ) this.rayList[this._lastTarget.id].gazeLeave(); // 上一帧射线击中物体，触发上一帧物体gazeLeave
 	    	this._lastTarget = null;
 	    }
 	}
