@@ -41,9 +41,9 @@
 		<div class="vr-btn">进入VR</div>
 	</section>
 </body>
-<script src="./docs/vendor/webvr-polyfill.js"></script>
-<script src="./docs/vendor/three.min.js"></script>
-<script src="./docs/vendor/tween.min.js"></script>
+<script src="./vendor/webvr-polyfill.js"></script>
+<script src="./vendor/three.min.js"></script>
+<script src="./vendor/tween.min.js"></script>
 <script>
 	/**
 ** author:YorkChan
@@ -290,9 +290,14 @@ class Gazer {
 		this.rayList[target.id][eventType] = callback;
 		this.targetList = Object.keys(this.rayList).map(key => this.rayList[key].target);
 	}
-	off(target) {
-		delete this.rayList[target.id];
-		this.targetList = Object.keys(this.rayList).map(key => this.rayList[key].target);
+	off(target,eventType) {
+        if (!eventType) {
+		    delete this.rayList[target.id];
+            this.targetList = Object.keys(this.rayList).map(key => this.rayList[key].target);
+        } else {
+            const noop = () => {};
+            this.rayList[target.id][eventType] = noop;
+        }
 	}
 	clear() {
 		this.rayList = {},this.targetList = [];
