@@ -301,7 +301,7 @@ class TouchPad {
         if (!navigator.getGamepads) {
         return null;
         }
-
+        if (this._gamepad && this._gamepad.connected) return this._gamepad;
         const gamepads = navigator.getGamepads();
         for (let i = 0; i < gamepads.length; ++i) {
             let gamepad = gamepads[i];
@@ -310,6 +310,7 @@ class TouchPad {
         // a non-null pose. Clicker devices such as Cardboard button emulation
         // have a displayId but no pose.
             if (gamepad && ( gamepad.id === 'Gear VR Touchpad') && gamepad.connected) {
+                this._gamepad = gamepad;
                 return gamepad;
             }
         }
