@@ -84,18 +84,6 @@ class WebVRApp {
 		// 窗口大小调整监听
 		window.addEventListener( 'resize', this.resize.bind(this), false );
     }
-	start() {
-		const {scene,camera} = this;
-		// 创建准心
-		camera.add(this.createCrosshair());
-		// 创建光线
-        scene.add(new THREE.AmbientLight(0xFFFFFF));
-		scene.add(this.createLight());
-		// 创建地面
-		this.addGround(1000,1000);
-		this.gazer = new Gazer();
-        this.addCubes();
-	}
 	initVR() {
 		const {renderer} = this;
 		renderer.vr.enabled = true;
@@ -120,7 +108,20 @@ class WebVRApp {
 		camera.updateProjectionMatrix();
 		renderer.setSize(window.innerWidth, window.innerHeight);
 	}
-	createCrosshair () {
+	start() {
+		const {scene} = this;
+		// 创建准心
+		this.addCrosshair();
+		// 创建光线
+        scene.add(new THREE.AmbientLight(0xFFFFFF));
+		this.addLight();
+		// 创建地面
+		this.addGround(1000,1000);
+		this.gazer = new Gazer();
+        this.addBalls();
+	}
+	addCrosshair () {
+		const {camera} = this;
 		// 创建准心
         const geometry = new THREE.CircleGeometry( 0.002, 16 );
         const material = new THREE.MeshBasicMaterial({
@@ -130,9 +131,9 @@ class WebVRApp {
         });
         const crosshair = new THREE.Mesh(geometry,material);
         crosshair.position.z = -0.5;
-        return crosshair;
+        camera.add(crosshair);
 	}
-	addCubes() {
+	addBalls() {
         const {scene} = this;
 		for (let i = 0; i < 100; i++) {
 			// 创建立方体
@@ -143,22 +144,22 @@ class WebVRApp {
 				transparent:true
 			});
 			const geometry = new THREE.SphereGeometry(1,12,12);
-            const cube = new THREE.Mesh( geometry, material );
-			cube.castShadow = true;
-			cube.receiveShadow = true;
-			cube.position.set( 50*Math.random() - 25,50*Math.random(), 50*Math.random() - 25 );
-			scene.add(cube);
-			console.log('m',cube.position.x);
-			this.createBody(cube, 2);
-			this.gazer.on(cube,'gazeEnter',() => {
-				cube.material.opacity = 0.5;
+            const ball = new THREE.Mesh( geometry, material );
+			ball.castShadow = true;
+			ball.receiveShadow = true;
+			ball.position.set( 50*Math.random() - 25,50*Math.random() + 50, 50*Math.random() - 25 );
+			scene.add(ball);
+			this.addBody(ball, 1);
+			this.gazer.on(ball,'gazeEnter',() => {
+				ball.material.opacity = 0.5;
 			});
-			this.gazer.on(cube,'gazeLeave',() => {
-				cube.material.opacity = 1;
+			this.gazer.on(ball,'gazeLeave',() => {
+				ball.material.opacity = 1;
 			});
 		}
 	}
-	createLight() {
+	addLight() {
+        const {scene} = this;
 		// 创建光线
         const light = new THREE.DirectionalLight( 0xffffff, 1 );
 		light.position.set( 30, 30, -30 );
@@ -170,7 +171,7 @@ class WebVRApp {
 		light.shadow.camera.right = 350;
 		light.shadow.camera.top = 350;
 		light.shadow.camera.bottom = -350;
-		return light;
+		scene.add(light);
 	}
 	addGround(width,height) {
         const {scene,world} = this;
@@ -186,9 +187,9 @@ class WebVRApp {
 		ground.position.y = -10;
 		ground.receiveShadow = true;
         scene.add(ground);
-        this.createBody(ground, 0);
+        this.addBody(ground, 0);
     }
-    createBody(mesh, mass) {
+    addBody(mesh, mass) {
 		if (mesh.type != 'Mesh') return;
         const {
             geometry,
@@ -197,7 +198,6 @@ class WebVRApp {
         } = mesh;
 		let shape = null;
 		const { parameters } = geometry;
-		debugger
         switch (geometry.type) {
 			case 'BoxGeometry': shape = new CANNON.Box(new CANNON.Vec3(parameters.width,parameters.height,parameters.depth));break;
 			case 'SphereGeometry': shape = new CANNON.Sphere(parameters.radius);break;
@@ -205,7 +205,6 @@ class WebVRApp {
 			default: return;
 		}
 		const body = new CANNON.Body({ mass });
-			console.log('p',position.x);
 		body.position.set(position.x,position.y,position.z);
 		body.quaternion.set(quaternion.x,quaternion.y,quaternion.z,quaternion.w);
 		body.addShape(shape);
