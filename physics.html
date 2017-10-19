@@ -76,9 +76,8 @@ class WebVRApp {
         this.initPhysicsWorld();
 		// 往场景添加3d物体
 		this.start();
-        this.bindEvent();
-		// 渲染动画
-		this.renderer.animate(this.update.bind(this));
+		this.bindEvent();
+		this.render();
 	}
     bindEvent() {
 		// 窗口大小调整监听
@@ -94,7 +93,13 @@ class WebVRApp {
 			const button = document.querySelector('.vr-btn');
 			VRButton.init(display[0],renderer,button,() => button.textContent = '退出VR',() => button.textContent = '进入VR');
 		}).catch(err => console.warn(err));
-    }
+	}
+	render() {
+		THREE.DefaultLoadingManager.onLoad = () => {
+			// 渲染动画
+			this.renderer.animate(this.update.bind(this));
+		}
+	}
     initPhysicsWorld() {
         this.world = new CANNON.World();
         this.world.gravity.y = -9.82; // m/s²
