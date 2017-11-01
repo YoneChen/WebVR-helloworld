@@ -127,7 +127,7 @@ class WebVRApp {
 	addCrosshair () {
 		const {camera} = this;
 		// 创建准心
-        const geometry = new THREE.CircleGeometry( 0.002, 16 );
+        const geometry = new THREE.CircleBufferGeometry( 0.002, 16 );
         const material = new THREE.MeshBasicMaterial({
             color: 0xffffff,
             opacity: 0.5,
