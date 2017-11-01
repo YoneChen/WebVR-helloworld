@@ -44,7 +44,6 @@
 <script src="./vendor/webvr-polyfill.js"></script>
 <script src="./vendor/three.min.js"></script>
 <script src="./vendor/cannon.min.js"></script>
-<script src="./vendor/tween.min.js"></script>
 <script>
 	/**
 ** author:YorkChan
@@ -102,7 +101,7 @@ class WebVRApp {
 	}
     initPhysicsWorld() {
         this.world = new CANNON.World();
-        this.world.gravity.y = -9.82; // m/s²
+        this.world.gravity.y = -10; // m/s²
 		this.world.broadphase = new CANNON.NaiveBroadphase();
 		this.physiclist = [];
     }
@@ -140,7 +139,7 @@ class WebVRApp {
 	}
 	addBalls() {
         const {scene} = this;
-		for (let i = 0; i < 100; i++) {
+		for (let i = 0; i < 60; i++) {
 			// 创建立方体
 			const material = new THREE.MeshLambertMaterial({ 
 				color: 0xef6500,
@@ -148,13 +147,13 @@ class WebVRApp {
 				opacity:1,
 				transparent:true
 			});
-			const geometry = new THREE.SphereGeometry(1,12,12);
+			const geometry = new THREE.SphereGeometry(2,12,12);
             const ball = new THREE.Mesh( geometry, material );
 			ball.castShadow = true;
 			ball.receiveShadow = true;
-			ball.position.set( 50*Math.random() - 25,50*Math.random() + 50, 50*Math.random() - 25 );
+			ball.position.set( 30*Math.random() - 15,30*Math.random() + 15, 30*Math.random() - 15 );
 			scene.add(ball);
-			this.addBody(ball, 1);
+			this.addBody(ball, 1); // 质量为1
 			this.gazer.on(ball,'gazeEnter',() => {
 				ball.material.opacity = 0.5;
 			});
@@ -222,7 +221,7 @@ class WebVRApp {
     }
     updatePhysics(dt){
 		const {world,physiclist} = this;
-        this.world.step(1/60);
+        this.world.step(dt);
 		physiclist.map(( {mesh,body} ) => {
             mesh.position.copy(body.position);
             mesh.quaternion.copy(body.quaternion);
