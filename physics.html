@@ -221,7 +221,7 @@ class WebVRApp {
     }
     updatePhysics(dt){
 		const {world,physiclist} = this;
-        this.world.step(dt);
+        this.world.step(1/60,dt);
 		physiclist.map(( {mesh,body} ) => {
             mesh.position.copy(body.position);
             mesh.quaternion.copy(body.quaternion);
