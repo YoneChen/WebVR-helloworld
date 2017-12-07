@@ -240,21 +240,13 @@
 
 			if (display) {
 				button.addEventListener('click', e => {
-
 					display.isPresenting ? display.exitPresent() : display.requestPresent([{ source: renderer.domElement }]);
-
 				});
-
 				window.addEventListener('vrdisplaypresentchange', e => {
-
 					display.isPresenting ? enterVR() : exitVR();
-
 				}, false);
-
 			} else {
-
 				button.remove();
-
 			}
 		}
 

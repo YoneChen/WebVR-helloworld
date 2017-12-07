@@ -55,7 +55,7 @@
 <!-- <script src="./vendor/tween.min.js"></script> -->
 <script>
 	/**
-	 ** author:YorkChan
+	 ** author:YoneChen
 	 ** date:2017-08-18
 	 **/
 	class WebVRApp {
@@ -227,23 +227,15 @@
 
 			if (display) {
 				button.addEventListener('click', e => {
-
 					display.isPresenting ? display.exitPresent() : display.requestPresent([{
 						source: renderer.domElement
 					}]);
-
 				});
-
 				window.addEventListener('vrdisplaypresentchange', e => {
-
 					display.isPresenting ? enterVR() : exitVR();
-
 				}, false);
-
 			} else {
-
 				button.remove();
-
 			}
 		}
 
