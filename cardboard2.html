@@ -109,7 +109,6 @@
 				this.gazer.on(cube, 'gazeEnter', () => {
 					this.state._wait = true;
 					this.animate.loader.start();
-					this.state.gazeEnterTime = Date.now();
 				});
 				this.gazer.on(cube, 'gazeLeave', () => {
 					this.animate.loader.stop();
@@ -122,14 +121,11 @@
 						this.state._clicked = false;
 						cube.scale.set(1.5, 1.5, 1.5);
 					}
-					// gazeWait
-					if (this.state._wait && Date.now() - this.state.gazeEnterTime > this.state._duration) {
-						this.animate.loader.stop();
-						this.state._wait = false;
-						cube.material.opacity = 0.5;
-					}
 				});
-
+				this.gazer.on(cube, 'gazeWait', () => {
+					this.animate.loader.stop();
+					cube.material.opacity = 0.5;
+				})
 			}
 		}
 		initVR() {
@@ -259,6 +255,13 @@
 			this._center = new THREE.Vector2();
 			this.rayList = {}, this.targetList = [];
 			this._intersection = null, this._lastTarget = null;
+			this._gazeEnterTime = null, this.delayTime = 1500;
+		}
+		get delayTime() {
+			return this._delayTime;
+		}
+		set delayTime(val) {
+			this._delayTime = val;
 		}
 		get target() {
 			return this._lastTarget;
@@ -269,6 +272,7 @@
 		 *      'gazeEnter': '射线击中物体触发一次', 
 		 *      'gazeTrigger': '射线击中物体触发', 
 		 *      'gazeLeave': '射线离开物体触发'
+		 *      'gazeWait': '射线击中物体超过一定时间触发'
 		 * @param {Function} callback 事件回调
 		 **/
 		on(target, eventType, callback) {
@@ -277,7 +281,8 @@
 				target,
 				gazeEnter: noop,
 				gazeTrigger: noop,
-				gazeLeave: noop
+				gazeLeave: noop,
+				gazeWait: noop
 			};
 			this.rayList[target.id][eventType] = callback;
 			this.targetList = Object.keys(this.rayList).map(key => this.rayList[key].target);
@@ -305,9 +310,13 @@
 
 				if (targetChanged) this.rayList[this._lastTarget.id].gazeLeave(this._intersection); // 射线从A物体离开，触发A物体的gazeLeave事件
 
-				if (!this._lastTarget || targetChanged) this.rayList[currentTarget.id].gazeEnter(intersection); // 射线进入B物体，触发B物体的gazeEnter事件
+				if (!this._lastTarget || targetChanged) {
+					this._gazeEnterTime = Date.now();
+					this.rayList[currentTarget.id].gazeEnter(intersection); // 射线进入B物体，触发B物体的gazeEnter事件
+				}
 
 				this.rayList[currentTarget.id].gazeTrigger(intersection); // 射线在B物体上，触发B物体的gazeTrigger事件
+				this._delayListener(currentTarget.id);
 				this.intersection = intersection;
 				this._lastTarget = currentTarget;
 			} else {
@@ -316,6 +325,14 @@
 				this.intersection = null;
 				this._lastTarget = null;
 			}
+		}
+		_delayListener(targetid) {
+			const {_gazeEnterTime,delayTime,rayList} = this;
+			if (_gazeEnterTime && Date.now() - _gazeEnterTime > delayTime) {
+				rayList[targetid].gazeWait();
+				this._gazeEnterTime = null;
+			}
+
 		}
 	}
 	new WebVRApp();
