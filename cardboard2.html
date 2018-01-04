@@ -77,13 +77,10 @@
 		bindEvent() {
 			// 窗口大小调整监听
 			window.addEventListener('resize', this.resize.bind(this), false);
-			window.addEventListener('click', e => this.state._clicked = true, false);
 		}
 		start() {
 			const { scene, camera } = this;
 			this.state = {
-				_clicked: false,
-				_wait: false,
 				_duration: 1500
 			};
 			this.animate = {};
@@ -114,13 +111,6 @@
 					this.animate.loader.stop();
 					cube.scale.set(1, 1, 1);
 					cube.material.opacity = 1;
-				});
-				this.gazer.on(cube, 'gazeTrigger', () => {
-					// gazeClick
-					if (this.state._clicked) {
-						this.state._clicked = false;
-						cube.scale.set(1.5, 1.5, 1.5);
-					}
 				});
 				this.gazer.on(cube, 'gazeWait', () => {
 					this.animate.loader.stop();
