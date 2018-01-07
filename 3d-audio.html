@@ -186,7 +186,6 @@
 
             let forward = new THREE.Vector3(0,0,-1);
             forward.applyQuaternion(quaternion);
-            console.log(forward);
             forward.normalize();
             listener.forwardX.value = forward.x;
             listener.forwardY.value = forward.y;
@@ -201,17 +200,28 @@
         }
     }
     class Speaker {
-        constructor(ctx,path) {
+        constructor(ctx,path,autoPlay = true) {
             this.path = path;
             this.ctx = ctx;
-            this.panner = ctx.createPanner();
             this.source = ctx.createBufferSource();
-            this.volumn = ctx.createGain();
             this.source.loop = true;
+            this.panner = ctx.createPanner();
+            this.volumn = ctx.createGain();
+
             this.source.connect(this.panner);
             this.panner.connect(this.volumn);
             this.volumn.connect(ctx.destination);
-            this.processAudio();
+            this.processAudio(autoPlay);
+        }
+        get Volumn() {
+            return this.volumn.gain.value;
+        }
+        set Volumn(val) {
+            this.volumn.gain.value = val;
+        }
+        play() {
+            const { ctx, source } = this;
+            source.start(ctx.currentTime);
         }
         update(position) {
             const {panner} = this;
@@ -221,18 +231,18 @@
         loadAudio(path) {
             return fetch(path).then(res => res.arrayBuffer());
         }
-        async processAudio() {
+        async processAudio(autoPlay) {
             const {path,ctx,source} = this;
             try {
                 const data = await this.loadAudio(path);
                 const buffer = await ctx.decodeAudioData(data);
                 source.buffer = buffer;
-                source.start(ctx.currentTime);
+                autoPlay && this.play();
             } catch(err) {
                 console.warn(err);
             }
         }
     }
-	new WebVRApp();
+    new WebVRApp();
 </script>
 </html>
