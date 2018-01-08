@@ -82,13 +82,20 @@
 			// 创建地面
 			scene.add(this.createGround(1000, 1000));
 			// 创建立方体
-			this.cube = this.createCube(5, 5, 5);
-			this.cube.position.set(-12, 2, -100);
-            scene.add(this.cube);
+			this.car1 = this.createCar(5, 5, 8);
+			this.car1.position.set(-12, 2, -100);
+            scene.add(this.car1);
+			this.car2 = this.createCar(8, 5, 5);
+			this.car2.position.set(-200, 1, -20);
+            scene.add(this.car2);
             const ctx = new AudioContext();
             Listener.init(ctx);
-            this.speaker = new Speaker(ctx,'audio/horn.wav');
-
+            this.car1_speaker = new Speaker(ctx,'audio/horn.wav',false,() => {
+                this.car1_speaker.play(0);
+            });
+            this.car2_speaker = new Speaker(ctx,'audio/horn.wav',false,() => {
+                this.car2_speaker.play(5);
+            });
 		}
 		initVR() {
 			const { renderer } = this;
@@ -108,7 +115,7 @@
 			camera.updateProjectionMatrix();
 			renderer.setSize(window.innerWidth, window.innerHeight);
 		}
-		createCube(width = 2, height = 2, depth = 2, color = 0xef6500) {
+		createCar(width = 2, height = 2, depth = 2, color = 0xef6500) {
 			// 创建立方体
 
 			const geometry = new THREE.CubeGeometry(width, height, depth);
@@ -142,11 +149,12 @@
 			return ground;
 		}
 		update() {
-			const { scene, camera, renderer,speaker } = this;
+			const { scene, camera, renderer } = this;
 			// 启动渲染
-			this.cube.rotation.z += 0.1;
-            this.cube.position.z += 0.4;
-            speaker.update(this.cube.position);
+            this.car1.position.z += 0.4;
+            this.car2.position.x += 0.3;
+            this.car1_speaker.update(this.car1.position);
+            this.car2_speaker.update(this.car2.position);
             Listener.update(camera.position,camera.quaternion);
 			renderer.render(scene, camera);
 		}
@@ -200,7 +208,7 @@
         }
     }
     class Speaker {
-        constructor(ctx,path,autoPlay = true) {
+        constructor(ctx,path,autoPlay = true,callback = () => {}) {
             this.path = path;
             this.ctx = ctx;
             this.source = ctx.createBufferSource();
@@ -211,7 +219,7 @@
             this.source.connect(this.panner);
             this.panner.connect(this.volumn);
             this.volumn.connect(ctx.destination);
-            this.processAudio(autoPlay);
+            this.processAudio(autoPlay,callback);
         }
         get Volumn() {
             return this.volumn.gain.value;
@@ -219,9 +227,9 @@
         set Volumn(val) {
             this.volumn.gain.value = val;
         }
-        play() {
+        play(time = 0) {
             const { ctx, source } = this;
-            source.start(ctx.currentTime);
+            source.start(time);
         }
         update(position) {
             const {panner} = this;
@@ -231,13 +239,14 @@
         loadAudio(path) {
             return fetch(path).then(res => res.arrayBuffer());
         }
-        async processAudio(autoPlay) {
+        async processAudio(autoPlay,callback) {
             const {path,ctx,source} = this;
             try {
                 const data = await this.loadAudio(path);
                 const buffer = await ctx.decodeAudioData(data);
                 source.buffer = buffer;
                 autoPlay && this.play();
+                callback();
             } catch(err) {
                 console.warn(err);
             }
