@@ -1,8 +1,9 @@
 # WebVR-helloworld
 a webVR 'hello world' project base in three.js
 
-![WebVR未来新潮](http://upload-images.jianshu.io/upload_images/1939855-947df10d4260d1fc.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+English language version will soon be released.
 
+![WebVR未来新潮](http://upload-images.jianshu.io/upload_images/1939855-947df10d4260d1fc.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 WebVR即web + VR的体验方式，我们可以戴着头显享受沉浸式的网页，新的API标准让我们可以使用js语言来开发。本文将介绍如何快速开发一个WebVR网页，在此之前，我们有必要了解WebVR的体验方式。
 
 ### WebVR体验模式
@@ -11,7 +12,7 @@ WebVR即web + VR的体验方式，我们可以戴着头显享受沉浸式的网�
 ![体验WebVR的方式](http://upload-images.jianshu.io/upload_images/1939855-e2070b8dec8ba830.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 ***WebVR的体验方式可以分为VR模式和裸眼模式***
 
-##### VR模式
+#### VR模式
 
 ***1.Mobile VR***
 
@@ -21,7 +22,7 @@ WebVR即web + VR的体验方式，我们可以戴着头显享受沉浸式的网�
 
 通过佩戴Oculus Rift的分离式头显浏览连接在PC主机端的网页，现支持WebVR API的浏览器主要是火狐的 [Firefox Nightly](https://nightly.mozilla.org/)和设置VR enabled的谷歌chrome beta。
 
-##### 裸眼模式
+#### 裸眼模式
 
 除了VR模式下的体验方式，这里还考虑了裸眼下的体验浏览网页的方式，在PC端如果探测的用户选择进入VR模式，应让用户可以使用鼠标拖拽场景，而在智能手机上则应让用户可以使用touchmove或旋转倾斜手机的方式来改变场景视角。
 WebVR的概念大概就如此，这次我们将采用cardboard + mobile的方式来测试我们的WebVR场景，现在踏上我们的开发之旅。
@@ -39,15 +40,13 @@ WebVR的概念大概就如此，这次我们将采用cardboard + mobile的方式
 
 > 需要引入的js插件：
   1.[three.min.js](https://github.com/mrdoob/three.js/blob/dev/build/three.min.js)
-  2.[webvr-polyfill.js](https://github.com/googlevr/webvr-polyfill/)
+  2.[webvr-polyfill.js](https://github.com/googlevr/webvr-polyfill/)  由于[WebVR API](https://developer.mozilla.org/zh-CN/docs/Web/API/WebVR_API)还没被各大主流浏览器支持，因此需要引入它来解决兼容性问题。
 
-###### webvr-polyfill.js
-由于[WebVR API](https://developer.mozilla.org/zh-CN/docs/Web/API/WebVR_API)还没被各大主流浏览器支持，因此需要引入webvr-polyfill.js来支持WebVR网页，它提供了大量VR相关的API，比如Navigator.getVRDisplay()获取VR头显信息的方法。
 
-# 3D场景构建
+### 3D场景构建
 ---
 首先我们创建一个HTML文件
-```
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -73,29 +72,29 @@ WebVR的概念大概就如此，这次我们将采用cardboard + mobile的方式
 </html>
 ```
 接下来编写js脚本，开始创建我们的3d场景。
-###### 1.创建场景
+#### 1.创建场景
 
 Three.js中的scene场景是绘制我们3d对象的整个容器
-```
+```javascript
 var scene = new THREE.Scene();
 ```
 
-###### 2.添加相机
+#### 2.添加相机
 
 ![Three.js的相机](http://upload-images.jianshu.io/upload_images/1939855-c08215f1d0ce4f7c.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 Three.js中的camera相机代表用户的眼睛，我们通过设置FOV确定视野范围，
-```
+```javascript
 //定义一个60°的视角，视线范围在1到1000的透视相机
 var camera = new THREE. new THREE.PerspectiveCamera(60,window.innerWidth/window.innerHeight,1,1000);
 scene.add(camera);
 ```
 
-###### 3.添加渲染器
+#### 3.添加渲染器
 
 Three.js的渲染器用来渲染camera所看到的画面
 
-```
+```javascript 
 //初始化渲染器 antialias参数为ture表示开启抗锯齿策略
 var renderer = new THREE.WebGLRenderer({ antialias: true } );
 //设置渲染器渲染尺寸
@@ -108,7 +107,7 @@ document.body.appendChild(renderer.domElement);
 
 ###### 4.添加一个立方体网格
 
-```
+```javascript 
 // 创建立方体
 var geometry = new THREE.CubeGeometry( 10,10,10);
 var material = new THREE.MeshLambertMaterial( { color: 0xef6500,needsUpdate: true,opacity:1,transparent:true} );
@@ -118,12 +117,12 @@ cube.rotation.set(Math.PI/6,Math.PI/4,0);
 scene.add(cube);
 ```
 
-###### 5.启动动画
+#### 5.启动动画
 
 动画渲染的原理：渲染器的持续调用绘制方法，方法里动态改变物体的属性。
 旧版的three.js需要手动调用requestAnimationFrame()方法递归的方式来渲染动画，新版three.js已经封装了该属性，因此只需要通过渲染器`renderer.animate(callback)`。
 
-```
+```javascript 
 function update() {
     //让立方体旋转
     cube.rotation.y += 0.01;
@@ -138,13 +137,13 @@ renderer.animate(update);//启动动画
 
 至此，我们已经绘制了一个简单的3d场景并且让它动了起来，接下来，我们需要让我们的场景可以支持WebVR模式。
 
- # WebVR场景开发
+ ### WebVR场景开发
 ---
 WebVR网页开发的基本原理是通过WebVR API获取VR动态数据（VR Display frameData），渲染器根据VR数据来分别绘制左右屏场景，具体步骤如下：
 1. 使用`navigator.getVRDisplays`获取vr设备示例
 ![WebVR网页分屏](http://upload-images.jianshu.io/upload_images/1939855-1dcc4cb9af23b8be.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 vrdisplay是vr设备的实例，我们需要将它传给当前运行的renderer渲染器。
-```
+```javascript 
 function initVR(renderer) {
     renderer.vr.enabled = true;
     navigator.getVRDisplays().then( function(display) {
@@ -163,20 +162,19 @@ function initVR(renderer) {
 1. 当点击按钮时，根据`display.isPresenting`判断当前是否是使用vr设备下进行渲染，如果false，进入2，否则true进入3
 2. 当前非VR模式，点击按钮进入VR模式，此时调用`display.requestPresent()`，`display.isPresenting`被设置为true，触发window的`vrdisplaypresentchange`事件
 3. 当前为VR模式，点击按钮退出模式，此时调用`display.exitPresent()`，`display.isPresenting`被设置为false，触发window的`vrdisplaypresentchange`事件
-```
+```javascript 
 /**  VR按钮控制
-    * @param {VRDisplay} display VRDisplay实例
-    * @param {THREE.WebGLRenderer} renderer 渲染器
-    * @param {HTMLElement} button VR控制按钮
-    * @param {Function} enterVR 点击进入VR模式时回调
-    * @param {Function} exitVR 点击退出VR模式时回调
-    **/
+  * @param {VRDisplay} display VRDisplay实例
+  * @param {THREE.WebGLRenderer} renderer 渲染器
+  * @param {HTMLElement} button VR控制按钮
+  * @param {Function} enterVR 点击进入VR模式时回调
+  * @param {Function} exitVR 点击退出VR模式时回调
+**/
 function VRbutton(display,renderer,button,enterVR,exitVR) {
     if ( display ) {
         button.addEventListener('click', function() {
             // 点击vr按钮控制`isPresenting`状态
             display.isPresenting ? display.exitPresent() : display.requestPresent( [ { source: renderer.domElement } ] );
-
         });
 
         window.addEventListener( 'vrdisplaypresentchange', function() {
@@ -187,114 +185,103 @@ function VRbutton(display,renderer,button,enterVR,exitVR) {
     } else {
         // 找不到vr设备实例，则移除按钮
         button.remove();
-
     }
 }
 
 ```
 我们可以在`vrdisplaypresentchange`事件中根据`isPresenting`的值来改变按钮的UI，而three.js将根据`isPresenting`的值来决定是常规渲染还是vr模式渲染，在vr模式下，three.js将创建两个camera进行渲染。
 
-
+### 代码优化
 最后，将WebVR应用写成ES6 class，后面开发流程将按如下图结构来规范代码：
 
 ![WebVRApp类](http://upload-images.jianshu.io/upload_images/1939855-31753712dac7bc76.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
-第一步，构造函数先初始化VR场景、相机和渲染器；第二步，在渲染之前调用start方法，在start方法里我们为场景创建3d物体；最后，调起`renderer.animate(this.update)`开启动画渲染，update方法里我们可动态操作物体属性，具体代码如下：
-```
+第一步，构造函数先初始化VR场景、相机和渲染器；
+第二步，在渲染之前调用start方法，在start方法里我们为场景创建3d物体；
+最后，调起`renderer.animate(this.update)`开启动画渲染，update方法里我们可动态操作物体属性，具体代码如下：
+```javascript
 class WebVRApp {
-	constructor() {
-		// 初始化场景
-		this.scene = new THREE.Scene();
-		// 初始化相机
-		this.camera = new THREE.PerspectiveCamera(60,window.innerWidth/window.innerHeight,0.1,1000);
-		this.scene.add(this.camera);
+  constructor() {
+    // 初始化场景
+    this.scene = new THREE.Scene();
+    // 初始化相机
+    this.camera = new THREE.PerspectiveCamera(60,window.innerWidth/window.innerHeight,0.1,1000);
+    this.scene.add(this.camera);
 
-		// 初始化渲染器
-		this.renderer = new THREE.WebGLRenderer({ antialias: true } );
-		this.renderer.setSize(window.innerWidth,window.innerHeight);
-		this.renderer.setClearColor(0x519EcB);
-		this.renderer.setPixelRatio(window.devicePixelRatio);
-		document.querySelector('.main-page').appendChild(this.renderer.domElement);
+    // 初始化渲染器
+    this.renderer = new THREE.WebGLRenderer({ antialias: true } );
+    this.renderer.setSize(window.innerWidth,window.innerHeight);
+    this.renderer.setClearColor(0x519EcB);
+    this.renderer.setPixelRatio(window.devicePixelRatio);
+    document.querySelector('.main-page').appendChild(this.renderer.domElement);
 
-		this.clock = new THREE.Clock();
-		// VR初始化
-		this.initVR();
-		// 往场景添加3d物体
-		this.start();
-		// 窗口大小调整监听
-		window.addEventListener( 'resize', this.resize.bind(this), false );
-		// 渲染动画
-		this.renderer.animate(this.update.bind(this));
-	}
-    // 创建3d物体
-	start() {
-		const {scene,camera} = this;
-		// 创建光线
-		scene.add(new THREE.AmbientLight(0xFFFFFF));
-		scene.add(this.createLight());
-		// 创建地面
-		scene.add(this.createGround(1000,1000));
-		// 创建立方体
-		this.cube = this.createCube(2,2,2, 2,-1,-3);
-	}
-    // VR模式初始化
-	initVR() {
-		const {renderer} = this;
-		renderer.vr.enabled = true;
-		// 获取VRDisplay实例
-		navigator.getVRDisplays().then( display => {
-			// 将display实例传给renderer渲染器
-			renderer.vr.setDevice(display[0]);
-			const button = document.querySelector('.vr-btn');
-			VRButton.init(display[0],renderer,button,() => button.textContent = '退出VR',() => button.textContent = '进入VR');
-		}).catch(err => console.warn(err));
-	}
-    // 窗口调整监听
-	resize() {
-		const {camera,renderer} = this;
-		// 窗口调整重新调整渲染器
-		camera.aspect = window.innerWidth / window.innerHeight;
-		camera.updateProjectionMatrix();
-		renderer.setSize(window.innerWidth, window.innerHeight);
-	}
-	createCube(width=2,height=2,depth=2, posX,posY,posZ) {
-		// 创建立方体
-		const geometry = new THREE.CubeGeometry(width,height,depth);
-		const material = new THREE.MeshLambertMaterial({ 
-			color: 0xef6500,
-			needsUpdate: true,
-			opacity:1,
-			transparent:true
-		});
-		const cube = new THREE.Mesh( geometry, material );
-		cube.position.set({
-			x: posX,
-			y: posY,
-			z: posZ
-		});
-		return cube;
-	}
-	createGround(width,height) {
-		// 创建地平面
-		const geometry = new THREE.PlaneBufferGeometry( width, height );
-		const material = new THREE.MeshPhongMaterial( { color: 0xaaaaaa } );
-		const ground = new THREE.Mesh( geometry, material );
-		ground.rotation.x = - Math.PI / 2;
-		ground.position.y = -10;
-		return ground;
-	}
-    // 动画更新
-	update() {
-		const {scene,camera,renderer,clock} = this;
-		const delta = clock.getDelta() * 60;
-		// 启动渲染
-		this.cube.rotation.y += 0.1 * delta;
-		renderer.render(scene, camera);
-	}
+    this.clock = new THREE.Clock();
+    // VR初始化
+    this._initVR();
+    // 往场景添加3d物体
+    this.start();
+    // 窗口大小调整监听
+    window.addEventListener( 'resize', this._resize.bind(this), false );
+    // 渲染动画
+    this.renderer.animate(this.update.bind(this));
+  }
+  // 创建3d物体
+  start() {
+    const { scene, camera } = this;
+    // 创建光线、地面等
+    ...
+    // 创建立方体
+    const geometry = new THREE.CubeGeometry(2, 2, 2);
+    const material = new THREE.MeshLambertMaterial({ 
+      color: 0xef6500,
+    });
+    this.cube = new THREE.Mesh( geometry, material );
+    this.cube.position.set({ x: 0, y: 0, z: -4 });
+    scene.add(this.cube);
+  }
+  // 动画更新
+  update() {
+    const {scene,camera,renderer,clock} = this;
+    const delta = clock.getDelta() * 60;
+    // 启动渲染
+    this.cube.rotation.y += 0.1 * delta;
+    renderer.render(scene, camera);
+  }
+  // VR模式初始化
+  _initVR() {
+    const { renderer } = this;
+    renderer.vr.enabled = true;
+    // 获取VRDisplay实例
+    navigator.getVRDisplays().then( display => {
+    // 将display实例传给renderer渲染器
+    renderer.vr.setDevice(display[0]);
+    const button = document.querySelector('.vr-btn');
+    VRButton.init(display[0],renderer,button,() => button.textContent = '退出VR',() => button.textContent = '进入VR');
+    }).catch(err => console.warn(err));
+  }
+  // 窗口调整监听
+  _resize() {
+    const { camera, renderer } = this;
+    // 窗口调整重新调整渲染器
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  }
 }
 new WebVRApp();
 ```
 ![demo示例](http://upload-images.jianshu.io/upload_images/1939855-a11072a1eea3550e.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 完整代码：[github.com/YoneChen/WebVR-helloworld](https://github.com/YoneChen/WebVR-helloworld)。
+
+### 结语
+---
+目前，国外的谷歌、火狐、Facebook和国内百度已推出支持WebVR浏览器的版本，微软也宣布将推出自己的VR浏览器，随着后期5g网络极速时代的到来以及HMD头显的价格和平台的成熟，WebVR的体验方式将是革命性的，用户通过WebVR浏览网上商店，线上教学可进行“面对面”师生交流等，基于这种种应用场景，我们可以找到一个更好的动力去学习WebVR。
+
+### 参考链接
+---
+[responisve WebVR](http://smus.com/responsive-vr/): 探讨WebVR在不同头显(HMD)的适配方案
+[MolizaVR example](https://mozvr.com/#showcase): 火狐WebVR示例
+[webvr-boilerplate](https://github.com/borismus/webvr-boilerplate): A starting point for web-based VR experiences that work on all VR headsets.
+[how to build webvr](https://www.sitepoint.com/how-to-build-vr-on-the-web-today/): How to Build VR on the Web Today
 
