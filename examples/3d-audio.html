@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0, shrink-to-fit=no">
+	<title>webVR-3d-audio</title>
+	<style>
+		* {
+			margin: 0;
+			padding: 0;
+		}
+		html,body {
+			height: 100%;
+		}
+		body {
+			font-size: 14px;
+			font-family: "Arial","Microsoft YaHei","黑体",sans-serif;
+			overflow: hidden;
+		}
+		html,body,.main-page {
+			position: relative;
+			height: 100%;
+			overflow: hidden;
+		}
+		.vr-btn {
+			position: fixed;
+			right: 18px;
+			bottom: 18px;
+			padding: 8px 12px;
+			background-color: #00aadd;
+			text-align: center;
+			color: #fff;
+			font-size: 14px;
+			cursor: pointer;
+			z-index: 100;
+		}
+	</style>
+</head>
+<body>
+	<section class="main-page">
+		<div class="vr-btn">进入VR</div>
+	</section>
+</body>
+<script src="../vendor/webvr-polyfill.js"></script>
+<script src="../vendor/three.min.js"></script>
+<script src="../common/vrbase.js"></script>
+<script>
+	/**
+** author:YoneChen
+** date:2017-08-18
+**/
+	class WebVRApp extends VRBase {
+		constructor() {
+			super({
+				renderElement: document.querySelector('.main-page'),
+				buttonElement: document.querySelector('.vr-btn')
+			});
+		}
+		start() {
+			const { scene, camera } = this;
+			// 创建光线
+			scene.add(new THREE.AmbientLight(0xFFFFFF));
+			scene.add(this.createLight());
+			// 创建地面
+			scene.add(this.createGround(1000, 1000));
+			// 创建立方体
+			this.car1 = this.createCar(5, 5, 8);
+			this.car1.position.set(-12, 2, -100);
+            scene.add(this.car1);
+			this.car2 = this.createCar(8, 5, 5);
+			this.car2.position.set(-200, 1, -20);
+            scene.add(this.car2);
+            const ctx = new AudioContext();
+            Listener.init(ctx);
+            this.car1_speaker = new Speaker(ctx,'../audio/horn.wav',false,() => {
+                this.car1_speaker.play(0);
+            });
+            this.car2_speaker = new Speaker(ctx,'../audio/horn.wav',false,() => {
+                this.car2_speaker.play(5);
+            });
+		}
+		createCar(width = 2, height = 2, depth = 2, color = 0xef6500) {
+			// 创建立方体
+			const geometry = new THREE.CubeGeometry(width, height, depth);
+			const material = new THREE.MeshLambertMaterial({
+				color: color,
+				needsUpdate: true,
+				opacity: 1,
+				transparent: true
+			});
+			const cube = new THREE.Mesh(geometry, material);
+			cube.castShadow = true;
+			return cube;
+		}
+		createLight() {
+			// 创建光线
+			const light = new THREE.DirectionalLight(0xffffff, 0.3);
+			light.position.set(50, 50, -50);
+			light.castShadow = true;
+			light.shadow.mapSize.width = 2048;
+			light.shadow.mapSize.height = 512;
+			return light;
+		}
+		createGround(width, height) {
+			// 创建地平面
+			const geometry = new THREE.PlaneBufferGeometry(width, height);
+			const material = new THREE.MeshPhongMaterial({ color: 0xaaaaaa });
+			const ground = new THREE.Mesh(geometry, material);
+			ground.rotation.x = - Math.PI / 2;
+			ground.position.y = -10;
+			ground.receiveShadow = true;
+			return ground;
+		}
+		update() {
+			const { scene, camera, renderer } = this;
+			// 启动渲染
+            this.car1.position.z += 0.4;
+            this.car2.position.x += 0.3;
+            this.car1_speaker.update(this.car1.position);
+            this.car2_speaker.update(this.car2.position);
+            Listener.update(camera.position,camera.quaternion);
+		}
+	}
+    const Listener = {
+        init(ctx) {
+            this.ctx = ctx;
+            this.listener = this.ctx.listener;
+        },
+        update(position,quaternion) {
+            const {listener} = this;
+            listener.positionX = position.x;
+            listener.positionY = position.y;
+            listener.positionZ = position.z;
+            let forward = new THREE.Vector3(0,0,-1);
+            forward.applyQuaternion(quaternion);
+            forward.normalize();
+            listener.forwardX.value = forward.x;
+            listener.forwardY.value = forward.y;
+            listener.forwardZ.value = forward.z;
+            let up = new THREE.Vector3(0,1,0);
+            up.applyQuaternion(quaternion);
+            up.normalize();
+            listener.upX.value = up.x;
+            listener.upY.value = up.y;
+            listener.upZ.value = up.z;
+        }
+    }
+    class Speaker {
+        constructor(ctx,path,autoPlay = true,callback = () => {}) {
+            this.path = path;
+            this.ctx = ctx;
+            this.source = ctx.createBufferSource();
+            this.source.loop = true;
+            this.panner = ctx.createPanner();
+            this.volumn = ctx.createGain();
+            this.source.connect(this.panner);
+            this.panner.connect(this.volumn);
+            this.volumn.connect(ctx.destination);
+            this.processAudio(autoPlay,callback);
+        }
+        get Volumn() {
+            return this.volumn.gain.value;
+        }
+        set Volumn(val) {
+            this.volumn.gain.value = val;
+        }
+        play(time = 0) {
+            const { ctx, source } = this;
+            source.start(time);
+        }
+        update(position) {
+            const {panner} = this;
+            panner.setPosition(position.x,position.y,position.z);
+            // panner.setOrientation(rotation.x,rotation.y,rotation.z);
+        }
+        loadAudio(path) {
+            return fetch(path).then(res => res.arrayBuffer());
+        }
+        async processAudio(autoPlay,callback) {
+            const {path,ctx,source} = this;
+            try {
+                const data = await this.loadAudio(path);
+                const buffer = await ctx.decodeAudioData(data);
+                source.buffer = buffer;
+                autoPlay && this.play();
+                callback();
+            } catch(err) {
+                console.warn(err);
+            }
+        }
+    }
+    new WebVRApp();
+
+</script>
+</html>

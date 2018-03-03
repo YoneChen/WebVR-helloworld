@@ -23,8 +23,10 @@ class VRBase {
 		this.start();
 		// 窗口大小调整监听
 		window.addEventListener('resize', this._resize.bind(this), false);
-		// 渲染动画
-		this.renderer.animate(this._animate.bind(this));
+		// THREE.DefaultLoadingManager.onLoad = () => {
+			// 渲染动画
+			this.renderer.animate(this._animate.bind(this));
+		// }
 	}
 	start() {}
 	update() {}

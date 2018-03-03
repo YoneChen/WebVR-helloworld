@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0, shrink-to-fit=no">
+	<title>cardboard-gaze</title>
+	<style>
+		* {
+			margin: 0;
+			padding: 0;
+		}
+		html,body {
+			height: 100%;
+		}
+		body {
+			font-size: 14px;
+			font-family: "Arial","Microsoft YaHei","黑体",sans-serif;
+			overflow: hidden;
+		}
+		html,body,.main-page {
+			position: relative;
+			height: 100%;
+			overflow: hidden;
+		}
+		.vr-btn {
+			position: fixed;
+			right: 18px;
+			bottom: 18px;
+			padding: 8px 12px;
+			background-color: #00aadd;
+			text-align: center;
+			color: #fff;
+			font-size: 14px;
+			cursor: pointer;
+			z-index: 100;
+		}
+	</style>
+</head>
+<body>
+	<section class="main-page">
+		<div class="vr-btn">进入VR</div>
+	</section>
+</body>
+<script src="../vendor/webvr-polyfill.js"></script>
+<script src="../vendor/three.min.js"></script>
+<script src="../vendor/tween.min.js"></script>
+<script src="../common/vrbase.js"></script>
+<script>
+	/**
+** author:YoneChen
+** date:2017-08-18
+**/
+	class WebVRApp extends VRBase {
+		constructor() {
+			super({
+				renderElement: document.querySelector('.main-page'),
+				buttonElement: document.querySelector('.vr-btn')
+			});
+		}
+		bindEvent() {
+			// 窗口大小调整监听
+			window.addEventListener('resize', this.resize.bind(this), false);
+		}
+		start() {
+			const { scene, camera } = this;
+			this.state = {
+				_duration: 1500
+			};
+			this.animate = {};
+			// 创建准心
+			camera.add(this.createCrosshair());
+			// 创建光线
+			scene.add(new THREE.AmbientLight(0xFFFFFF));
+			scene.add(this.createLight());
+			// 创建地面
+			scene.add(this.createGround(1000, 1000));
+			this.gazer = new Gazer();
+
+			// 创建立方体
+			for (let i = 0; i < 100; i++) {
+				const cube = this.createCube(2, 2, 2);
+				cube.position.set(
+					100 * Math.random() - 50,
+					50 * Math.random() - 10,
+					100 * Math.random() - 50
+				);
+				scene.add(cube);
+
+				this.gazer.on(cube, 'gazeEnter', () => {
+					this.state._wait = true;
+					this.animate.loader.start();
+				});
+				this.gazer.on(cube, 'gazeLeave', () => {
+					this.animate.loader.stop();
+					cube.scale.set(1, 1, 1);
+					cube.material.opacity = 1;
+				});
+				this.gazer.on(cube, 'gazeWait', () => {
+					this.animate.loader.stop();
+					cube.material.opacity = 0.5;
+				})
+			}
+		}
+		createCrosshair() {
+			// 创建准心
+			const geometry1 = new THREE.CircleGeometry(0.002, 16);
+			const material = new THREE.MeshBasicMaterial({
+				color: 0xffffff,
+				opacity: 0.5,
+				side: THREE.DoubleSide,
+				transparent: true,
+				needsUpdate: true
+			});
+			const pointer = new THREE.Mesh(geometry1, material);
+			pointer.name = 'pointer';
+			const geometry2 = new THREE.Geometry();
+			const loader = new THREE.Mesh(geometry2, material);
+			loader.rotation.set(0, Math.PI, Math.PI / 2);
+			loader.name = 'loader';
+			this.animate.loader = new TWEEN.Tween({ thetaLength: 0 })
+				.to({ thetaLength: 2 * Math.PI }, this.state._duration)
+				.onUpdate(function () {
+					loader.geometry = new THREE.RingGeometry(0.005, 0.007, 32, 8, 0, this.thetaLength);
+					loader.geometry.verticesNeedUpdate = true;
+				})
+				.onStop(function () {
+					this.thetaLength = 0;
+					loader.geometry = new THREE.Geometry();
+				});
+			const crosshair = new THREE.Group();
+			crosshair.add(pointer);
+			crosshair.add(loader);
+			crosshair.position.z = -0.5;
+			crosshair.matrixAutoUpdate = false;
+			crosshair.updateMatrix();
+			console.log(crosshair);
+			return crosshair;
+		}
+		createCube(width = 2, height = 2, depth = 2, color = 0xef6500) {
+			// 创建立方体
+
+			const geometry = new THREE.CubeGeometry(width, height, depth);
+			const material = new THREE.MeshLambertMaterial({
+				color: color,
+				needsUpdate: true,
+				opacity: 1,
+				transparent: true
+			});
+			const cube = new THREE.Mesh(geometry, material);
+			cube.castShadow = true;
+			return cube;
+		}
+		createLight() {
+			// 创建光线
+			const light = new THREE.DirectionalLight(0xffffff, 0.3);
+			light.position.set(50, 50, -50);
+			light.castShadow = true;
+			light.shadow.mapSize.width = 2048;
+			light.shadow.mapSize.height = 512;
+			return light;
+		}
+		createGround(width, height) {
+			// 创建地平面
+			const geometry = new THREE.PlaneBufferGeometry(width, height);
+			const material = new THREE.MeshPhongMaterial({ color: 0xaaaaaa });
+			const ground = new THREE.Mesh(geometry, material);
+			ground.rotation.x = - Math.PI / 2;
+			ground.position.y = -10;
+			ground.receiveShadow = true;
+			return ground;
+		}
+		update() {
+			const { scene, camera, renderer, clock } = this;
+			const delta = clock.getDelta() * 60;
+			// 启动渲染
+			TWEEN.update();
+			this.gazer.update(camera);
+		}
+	}
+	// 凝视监听器
+	class Gazer {
+		constructor() {
+			// 初始化射线发射源
+			this.raycaster = new THREE.Raycaster();
+			this._center = new THREE.Vector2();
+			this.rayList = {}, this.targetList = [];
+			this._intersection = null, this._lastTarget = null;
+			this._gazeEnterTime = null, this.delayTime = 1500;
+		}
+		get delayTime() {
+			return this._delayTime;
+		}
+		set delayTime(val) {
+			this._delayTime = val;
+		}
+		get target() {
+			return this._lastTarget;
+		}
+		/** 
+		 * @param {THREE.Mesh} target 监听的3d网格
+		 * @param {String} eventType 事件类型 
+		 *      'gazeEnter': '射线击中物体触发一次', 
+		 *      'gazeTrigger': '射线击中物体触发', 
+		 *      'gazeLeave': '射线离开物体触发'
+		 *      'gazeWait': '射线击中物体超过一定时间触发'
+		 * @param {Function} callback 事件回调
+		 **/
+		on(target, eventType, callback) {
+			const noop = () => { };
+			if (!this.rayList[target.id]) this.rayList[target.id] = {
+				target,
+				gazeEnter: noop,
+				gazeTrigger: noop,
+				gazeLeave: noop,
+				gazeWait: noop
+			};
+			this.rayList[target.id][eventType] = callback;
+			this.targetList = Object.keys(this.rayList).map(key => this.rayList[key].target);
+		}
+		off(target, eventType) {
+			if (!eventType) {
+				delete this.rayList[target.id];
+				this.targetList = Object.keys(this.rayList).map(key => this.rayList[key].target);
+			} else {
+				const noop = () => { };
+				this.rayList[target.id][eventType] = noop;
+			}
+		}
+		clear() {
+			this.rayList = {}, this.targetList = [];
+		}
+		update(camera) {
+			if (this.targetList.length <= 0) return;
+			//创建凝视器
+			this.raycaster.setFromCamera(this._center, camera);
+			const intersects = this.raycaster.intersectObjects(this.targetList);
+			if (intersects.length > 0) { //凝视触发
+				const intersection = intersects[0], currentTarget = intersection.object;
+				const targetChanged = this._lastTarget && this._lastTarget.id !== currentTarget.id; // 射线是否从A物体切换至B物体
+
+				if (targetChanged) this.rayList[this._lastTarget.id].gazeLeave(this._intersection); // 射线从A物体离开，触发A物体的gazeLeave事件
+
+				if (!this._lastTarget || targetChanged) {
+					this._gazeEnterTime = Date.now();
+					this.rayList[currentTarget.id].gazeEnter(intersection); // 射线进入B物体，触发B物体的gazeEnter事件
+				}
+
+				this.rayList[currentTarget.id].gazeTrigger(intersection); // 射线在B物体上，触发B物体的gazeTrigger事件
+				this._delayListener(currentTarget.id);
+				this.intersection = intersection;
+				this._lastTarget = currentTarget;
+			} else {
+				// 如果是离开物体，则触发gazeLeave
+				if (this._lastTarget) this.rayList[this._lastTarget.id].gazeLeave(this._intersection);
+				this.intersection = null;
+				this._lastTarget = null;
+			}
+		}
+		_delayListener(targetid) {
+			const {_gazeEnterTime,delayTime,rayList} = this;
+			if (_gazeEnterTime && Date.now() - _gazeEnterTime > delayTime) {
+				rayList[targetid].gazeWait();
+				this._gazeEnterTime = null;
+			}
+
+		}
+	}
+	new WebVRApp();
+</script>
+</html>
