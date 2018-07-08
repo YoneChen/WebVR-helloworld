@@ -57,10 +57,6 @@
 				buttonElement: document.querySelector('.vr-btn')
 			});
 		}
-		bindEvent() {
-			// 窗口大小调整监听
-			window.addEventListener('resize', this.resize.bind(this), false);
-		}
 		start() {
 			const { scene, camera } = this;
 			this.state = {

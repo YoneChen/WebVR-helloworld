@@ -67,13 +67,6 @@
 			this.world.broadphase = new CANNON.NaiveBroadphase();
 			this.physiclist = [];
 		}
-		resize() {
-			const { camera, renderer } = this;
-			// 窗口调整重新调整渲染器
-			camera.aspect = window.innerWidth / window.innerHeight;
-			camera.updateProjectionMatrix();
-			renderer.setSize(window.innerWidth, window.innerHeight);
-		}
 		start() {
 			// 初始化物理引擎
 			this.initPhysicsWorld();
