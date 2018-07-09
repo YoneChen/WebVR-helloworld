@@ -6,13 +6,13 @@ English language version will soon be released.
 ![WebVR未来新潮](http://upload-images.jianshu.io/upload_images/1939855-947df10d4260d1fc.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 WebVR即web + VR的体验方式，我们可以戴着头显享受沉浸式的网页，新的API标准让我们可以使用js语言来开发。本文将介绍如何快速开发一个WebVR网页，在此之前，我们有必要了解WebVR的体验方式。
 
-### WebVR体验模式
+## WebVR体验模式
 ---
 
 ![体验WebVR的方式](http://upload-images.jianshu.io/upload_images/1939855-e2070b8dec8ba830.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 ***WebVR的体验方式可以分为VR模式和裸眼模式***
 
-#### VR模式
+### VR模式
 
 ***1.Mobile VR***
 
@@ -22,17 +22,40 @@ WebVR即web + VR的体验方式，我们可以戴着头显享受沉浸式的网�
 
 通过佩戴Oculus Rift的分离式头显浏览连接在PC主机端的网页，现支持WebVR API的浏览器主要是火狐的 [Firefox Nightly](https://nightly.mozilla.org/)和设置VR enabled的谷歌chrome beta。
 
-#### 裸眼模式
+### 裸眼模式
 
 除了VR模式下的体验方式，这里还考虑了裸眼下的体验浏览网页的方式，在PC端如果探测的用户选择进入VR模式，应让用户可以使用鼠标拖拽场景，而在智能手机上则应让用户可以使用touchmove或旋转倾斜手机的方式来改变场景视角。
 WebVR的概念大概就如此，这次我们将采用cardboard + mobile的方式来测试我们的WebVR场景，现在踏上我们的开发之旅。
 
-### 准备工作
----
->测试工具：智能手机 + cardboard式头显 + chrome beta 60+（需开启WebVR选项）
+## WebVR的开发环境配置
+由于WebVR App需要运行VR设备上，而目前购买一台VR设备的成本不低，所以这里总结了一套开发环境下WebVR调试方案。
+首先我们需要给WebVR静态页面起一个web server，这里我安装 [Web Server for Chrome](https://chrome.google.com/webstore/detail/web-server-for-chrome/ofhbbkphhbklhfoeikjpcbhemlocgigb)，你也可以使用node或者上传至github托管。
 
-如果你练就了裸眼就能将手机双屏画面看成单屏的能力也可以省下头显。
+### PC端调试
+#### 1. 安装chrome扩展程序 [WebVR API Emulation](https://chrome.google.com/webstore/detail/webvr-api-emulation/gbdnpaebafagioggnhkacnaaahpiefil)
+使用WebVR API Emulation扩展程序可以模拟VR设备用户的视角、位置等。
 
+![WebVR API Emulation模拟VR体验](http://upload-images.jianshu.io/upload_images/1939855-9545a85e0244cbb8.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+### 移动端调试
+适用于cardboard级别的WebVR App调试。
+#### 1. 安装[chrome beta](https://play.google.com/store/apps/details?id=com.chrome.beta&hl=zh)
+目前需要webvr还属于早期实验阶段，需要下载chrome beta最新版，安装完需要手动开启webvr支持，在浏览器地址栏输入`chrome://flags#enable-webvr`，点击启用并重新启动chrome。
+
+
+![](http://upload-images.jianshu.io/upload_images/1939855-a95e2443a9e4d4db.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+
+
+
+#### 2. 安装[Google VR 服务](https://play.google.com/store/apps/details?id=com.google.vr.vrcore&hl=zh)
+这是google给cardboard、daydream用户提供VR服务配置，可以提供VR模式窗口，如下图。
+最后你可以在chrome上打开[WebVR示例页面](https://vrlist.io)验证是否配置成功
+
+![WebVR示例应用](http://upload-images.jianshu.io/upload_images/1939855-706f3a2451fc590e.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+###### 3. chrome inspector调试
+通过手机chrome访问我们开发的WebVR页面，在PC端chrome输入`chrome://inspector`进行调试，具体可以参考 [远程调试 Android 设备使用入门](https://developers.google.com/web/tools/chrome-devtools/remote-debugging/?hl=zh-cn)。
+
+完成WebVR开发环境配置之后，我们将正式进入WebVR开发之旅。
 >技术和框架：three.js for WebGL
 
 [Three.js](http://threejs.org)是构建3d场景的框架，它封装了WebGL函数，简化了创建场景的代码成本，利用three.js我们可以更优雅地创建出三维场景和三维动画，这里我使用的是0.86版本。
