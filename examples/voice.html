@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0, shrink-to-fit=no">
+	<title>cardboard-voice</title>
+	<style>
+		* {
+			margin: 0;
+			padding: 0;
+		}
+		html,body {
+			height: 100%;
+		}
+		body {
+			font-size: 14px;
+			font-family: "Arial","Microsoft YaHei","黑体",sans-serif;
+			overflow: hidden;
+		}
+		html,body,.main-page {
+			position: relative;
+			height: 100%;
+			overflow: hidden;
+		}
+		.vr-btn {
+			position: fixed;
+			right: 18px;
+			bottom: 18px;
+			padding: 8px 12px;
+			background-color: #00aadd;
+			text-align: center;
+			color: #fff;
+			font-size: 14px;
+			cursor: pointer;
+			z-index: 100;
+		}
+	</style>
+</head>
+<body>
+	<section class="main-page">
+		<div class="vr-btn">进入VR</div>
+	</section>
+</body>
+<script src="../vendor/webvr-polyfill.js"></script>
+<script src="../vendor/three.min.js"></script>
+<script src="../vendor/tween.min.js"></script>
+<script src="../common/vrbase.js"></script>
+<script>
+	/**
+** author:YoneChen
+** date:2018-07-08
+**/
+	class WebVRApp extends VRBase {
+		constructor() {
+			super({
+				renderElement: document.querySelector('.main-page'),
+				buttonElement: document.querySelector('.vr-btn')
+			});
+			this.voicer = new Voicer();
+			this.voicer.start();
+		}
+		start() {
+			const { scene, camera } = this;
+			this.state = {
+				_duration: 1500
+			};
+			this.animate = {};
+			// 创建准心
+			camera.add(this.createCrosshair());
+			// 创建光线
+			scene.add(new THREE.AmbientLight(0xFFFFFF));
+			scene.add(this.createLight());
+			// 创建地面
+			scene.add(this.createGround(1000, 1000));
+
+			// 创建字板
+			const board = this.createBoard(20, 7.5);
+			board.position.set(0,5,0);
+			scene.add(board);
+		}
+		createBoard({ width,height }) {
+
+			const geometry = new THREE.PlaneGeometry(width, height);
+			this.boardCanvas = document.createElement('canvas');
+			boardCanvas.width = width * 100, boardCanvas.height = height * 100;
+			this.setBoardCanvas(this.boardCanvas);
+			const texture = new THREE.CanvasTexture(this.boardCanvas);
+			texture.needsUpdate = true;
+			const material = new THREE.MeshBasicMaterial({ map: texture, opacity: 0.75, transparent: true });
+			const mesh = new THREE.Mesh(geometry, material);
+			return mesh;
+		}
+		setBoardCanvas(canvas,{
+            fontSize = 4,
+            fontColor = '#00aadd',
+            backgroundColor = '#333333',
+            text = ''
+		}) {
+			const { width, height } = canvas;
+			let ctx = canvas.getContext('2d');
+			ctx.fillStyle = backgroundColor;
+			ctx.fillRect(0, 0, width, height);
+			ctx.fillStyle = fontColor;
+			ctx.font = `${fontSize * 100}px Arial`;
+			ctx.textAlign = 'center';
+			ctx.textBaseline = 'middle';
+			ctx.fillText(text, width / 2, height / 2);
+		}
+		createLight() {
+			// 创建光线
+			const light = new THREE.DirectionalLight(0xffffff, 0.3);
+			light.position.set(50, 50, -50);
+			light.castShadow = true;
+			light.shadow.mapSize.width = 2048;
+			light.shadow.mapSize.height = 512;
+			return light;
+		}
+		createGround(width, height) {
+			// 创建地平面
+			const geometry = new THREE.PlaneBufferGeometry(width, height);
+			const material = new THREE.MeshPhongMaterial({ color: 0xaaaaaa });
+			const ground = new THREE.Mesh(geometry, material);
+			ground.rotation.x = - Math.PI / 2;
+			ground.position.y = -10;
+			ground.receiveShadow = true;
+			return ground;
+		}
+		update() {
+			const { scene, camera, renderer, clock, boardCanvas, voicer } = this;
+			voicer && this.setBoardCanvas(boardCanvas, {
+				text: voicer.speechText || 'Say something...'
+			});
+		}
+	}
+	window.SpeechRecognition = SpeechRecognition || window.webkitSpeechRecognition;
+    class Voicer {
+        constructor() {
+			const recognition =  new SpeechRecognition();
+			this._speechText = '';
+  			recognition.continuous = true;
+  			recognition.interimResults = true;
+			recognition.onresult = event => { 
+				for (let i = event.resultIndex; i < event.results.length; ++i) {
+
+        			this._speechText += event.results[i][0].transcript;
+				}
+			}
+			this.recognition = recognition;
+		}
+		get speechText() {
+			return this._speechText;
+		}
+		start() {
+			this.recognition.start();
+		}
+    }
+	new WebVRApp();
+</script>
+</html>
